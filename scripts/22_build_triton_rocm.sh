@@ -58,6 +58,7 @@ export TRITON_PARALLEL_LINK_JOBS="${TRITON_PARALLEL_LINK_JOBS:-$MAX_JOBS}"
 
 # Use Ninja for CMake builds
 export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
+export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
 
 # Install build dependencies
 pip install -q cmake ninja pybind11
@@ -84,7 +85,7 @@ pip install --force-reinstall "$ARTIFACTS_DIR"/triton-*.whl
 # Verify
 echo ""
 echo "=== Verification ==="
-cd /tmp && cd /tmp && cd /tmp && cd /tmp && python -c "
+cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && python -c "
 import triton
 import triton.language as tl
 print(f'Triton version: {triton.__version__}')

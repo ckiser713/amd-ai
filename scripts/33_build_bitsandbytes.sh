@@ -41,6 +41,7 @@ export PYTORCH_ROCM_ARCH="gfx1151"
 
 # Use Ninja for CMake builds
 export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
+export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
 
 # Build wheel with parallel compilation
 pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" --no-build-isolation -v

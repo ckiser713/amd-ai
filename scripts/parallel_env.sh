@@ -23,7 +23,7 @@ _is_high_mem_apu() {
 # Decide how many parallel jobs to run, respecting optional overrides:
 # - MAX_JOBS: hard override
 # - RESERVED_CORES: cores to keep free (default: 0 for high-mem APU, 1 otherwise)
-# - JOB_MEM_GB: assumed memory needed per job (default: 4 GiB for high-mem, 2 otherwise)
+# - JOB_MEM_GB: assumed memory needed per job (default: 1.5 GiB for high-mem, 2 otherwise)
 parallel_calculate_jobs() {
   local cores reserve usable mem_gb per_job_gb mem_limited jobs
 
@@ -41,13 +41,14 @@ parallel_calculate_jobs() {
   mem_gb=$(_parallel_mem_gb)
   
   # High-memory systems can afford more memory per job for faster compilation
-  # 128GB / 4GB per job = 32 jobs which matches well with Zen 5 core counts
+  # With 128GB, we can easily afford 1.5GB per job which allows maxing out even 64+ threads
   if _is_high_mem_apu; then
-    per_job_gb=${JOB_MEM_GB:-4}
+    per_job_gb=${JOB_MEM_GB:-1} # Relaxed from 4GB to 1GB to ensure core saturation
   else
     per_job_gb=${JOB_MEM_GB:-2}
   fi
-  ((per_job_gb < 1)) && per_job_gb=1
+  # Floating point handling in bash is tricky, treating as int 1 minimum
+  [[ "$per_job_gb" =~ ^[0-9]+$ ]] || per_job_gb=1
 
   if ((mem_gb > 0)); then
     mem_limited=$((mem_gb / per_job_gb))
@@ -74,13 +75,28 @@ apply_parallel_env() {
   jobs="$(parallel_calculate_jobs)"
   mem_gb=$(_parallel_mem_gb)
 
+  # Ensure jobs is never empty or zero - fallback to 4 if detection fails
+  if [[ -z "$jobs" ]] || ! [[ "$jobs" =~ ^[0-9]+$ ]] || ((jobs < 1)); then
+    jobs=4
+  fi
+
   export MAX_JOBS="${MAX_JOBS:-$jobs}"
+  # Double-check MAX_JOBS is valid
+  if [[ -z "$MAX_JOBS" ]] || ! [[ "$MAX_JOBS" =~ ^[0-9]+$ ]] || ((MAX_JOBS < 1)); then
+    export MAX_JOBS=4
+  fi
+
   export NUM_JOBS="${NUM_JOBS:-$MAX_JOBS}"
   export PARALLEL_LEVEL="${PARALLEL_LEVEL:-$MAX_JOBS}"
   export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
   export NINJAFLAGS="${NINJAFLAGS:--j$MAX_JOBS}"
-  export MAKEFLAGS="${MAKEFLAGS:--jobs=$MAX_JOBS --output-sync=target}"
+  # Use -j format (not --jobs=) for better compatibility
+  export MAKEFLAGS="${MAKEFLAGS:--j$MAX_JOBS}"
   export GIT_JOBS="${GIT_JOBS:-$MAX_JOBS}"
+
+  # DeepSpeed and other library specific parallel flags
+  export DS_BUILD_PARALLEL_LEVEL="${DS_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
+  export SKLEARN_BUILD_PARALLEL_LEVEL="${SKLEARN_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
 
   omp_threads="${OMP_NUM_THREADS:-$MAX_JOBS}"
   export OMP_NUM_THREADS="$omp_threads"
@@ -111,12 +127,12 @@ apply_parallel_env() {
     export HIPCC_COMPILE_FLAGS_APPEND="${HIPCC_COMPILE_FLAGS_APPEND:---ccache-flag=-Xcompiler}"
   fi
 
-  # Linker optimization - use mold if available for faster linking
-  if command -v mold &> /dev/null; then
-    export LDFLAGS="${LDFLAGS:-} -fuse-ld=mold"
-  elif command -v lld &> /dev/null; then
-    export LDFLAGS="${LDFLAGS:-} -fuse-ld=lld"
-  fi
+  # Linker optimization - disabled to prevent GCC LTO incompatibility with lld/mold
+  # if command -v mold &> /dev/null; then
+  #   export LDFLAGS="${LDFLAGS:-} -fuse-ld=mold"
+  # elif command -v lld &> /dev/null; then
+  #   export LDFLAGS="${LDFLAGS:-} -fuse-ld=lld"
+  # fi
 
   # Memory-mapped I/O optimization for large builds
   export MALLOC_MMAP_THRESHOLD_="${MALLOC_MMAP_THRESHOLD_:-131072}"
