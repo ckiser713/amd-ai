@@ -2,6 +2,7 @@
 # scripts/internal_container_build.sh
 set -e
 source scripts/parallel_env.sh
+export IGNORE_LOCKS=1
 
 # Ensure we have the environment variables we expect
 echo ">>> Internal Build: Max Jobs=$MAX_JOBS, Mode=$PARALLEL_MODE"

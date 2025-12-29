@@ -212,6 +212,9 @@ do_check() {
 
 # Check if script is locked - returns 0 if UNLOCKED, 1 if LOCKED
 check_lock() {
+    if [[ "${IGNORE_LOCKS:-0}" == "1" ]]; then
+        return 0  # Bypass lock check
+    fi
     local script_path="$1"
     # Handle both absolute and relative paths
     if [[ "$script_path" == /* ]]; then

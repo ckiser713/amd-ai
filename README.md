@@ -79,10 +79,8 @@ amd-ai-build-system-v2/
   wheels/                     # Cached wheels (torch, vllm, etc.)
   RoCompNew/                  # Build artifacts / summaries (legacy path)
   build_config/               # Build metadata / logs
-  agents/                     # Agent-side helper scripts & tooling
-
   README.md
-  agents.md                   # Roles & guardrails for AI agents
+  AGENTS.md                   # Roles & guardrails for AI agents
 ```
 
 > All paths are **repo-relative** so the whole folder is safe to move or copy.
@@ -213,7 +211,7 @@ For deeper tuning, pin `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, and examine CP
 
 ## 8. Where to point AI agents
 
-See **`agents.md`** for how to instruct ChatGPT / Cursor / other AIs to:
+See **`AGENTS.md`** for how to instruct ChatGPT / Cursor / other AIs to:
 
 - Extend the scripts safely.
 - Add new hardware targets (future AMD/NVIDIA GPUs).

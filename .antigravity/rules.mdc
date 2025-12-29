@@ -1,0 +1,345 @@
+---
+description: AMD AI Stack Build Guardrails — Strix Halo (gfx1151 / znver5)
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# AMD AI Workspace — Antigravity Rules
+
+These rules are automatically applied to all AI agent "Missions" in this workspace. The primary goal is to maintain a high-performance AI stack optimized for the **AMD Ryzen AI Max+ 395** (gfx1151 / znver5) with 128GB Unified Memory.
+
+---
+
+## 1. Hardware Guardrails (CRITICAL)
+
+### CPU Target
+- **Architecture**: `znver5` (AMD Zen 5)
+- Use `-march=znver5 -mtune=znver5` for all native compilation.
+- Never default to older targets like `znver4`, `x86-64`, or `generic`.
+
+### GPU Target
+- **Architecture**: `gfx1151` (AMD Strix Halo — RDNA 3.5)
+- Export `PYTORCH_ROCM_ARCH=gfx1151` for all ROCm builds.
+- Export `ROCM_PATH=/opt/rocm` as the standard ROCm installation path.
+
+### Anti-NVIDIA Policy
+> [!CAUTION]
+> **NEVER** add NVIDIA, CUDA, cuDNN, NCCL, or any NVIDIA-adjacent dependencies.
+> If a third-party library attempts to force a CUDA dependency, **halt the build and escalate**.
+
+---
+
+## 2. Parallelism Policy
+
+Source the parallelism helper before any build:
+```bash
+source scripts/parallel_env.sh
+apply_parallel_env
+```
+
+### Exported Variables
+All build commands **must** respect these environment variables to prevent system freezing:
+- `MAX_JOBS` — Primary job count (80% of cores by default)
+- `CMAKE_BUILD_PARALLEL_LEVEL`
+- `MAKEFLAGS` — Must contain `-j$MAX_JOBS`
+- `NINJAFLAGS` — Must contain `-j$MAX_JOBS`
+
+### Modes
+- `PARALLEL_MODE=force` (default) — Calculate and override all parallelism vars.
+- `PARALLEL_MODE=pin` — Use explicit `PARALLEL_JOBS` or `MAX_JOBS`.
+- `PARALLEL_MODE=respect` — Keep existing environment if set.
+
+---
+
+## 3. Path Safety
+
+### Repo-Relative Paths Only
+- **Flag** any attempt to use absolute user paths (e.g., `/home/user/...`).
+- Use `${ROOT_DIR}`, `${SCRIPT_DIR}`, or relative paths from repo root.
+- Exception: System paths like `/opt/rocm`, `/usr/bin`, `/tmp` are acceptable.
+
+### Standard Directories
+| Purpose            | Path                     |
+|--------------------|--------------------------|
+| Virtual Environment| `.venv/`                 |
+| Artifacts (wheels) | `artifacts/`             |
+| Wheel Cache        | `wheels/cache/`          |
+| Source Tree        | `src/` and `src/extras/` |
+| Build Logs         | `build_logs/`            |
+| Hardware Config    | `build_config/`          |
+
+---
+
+## 4. Environment Integrity
+
+### Python Environment
+- **Version**: Python 3.11 (pinned for ROCm 7.1.1 compatibility)
+- **Never** install Python 3.12+ via `apt` or other package managers.
+- Always prefer the project-local virtual environment in `.venv/`.
+
+### Activation
+```bash
+source .venv/bin/activate
+```
+
+### Package Installation
+> [!IMPORTANT]
+> **Never** run `pip install torch` or `pip install numpy` from PyPI.
+> Use `artifacts/*.whl` files exclusively.
+
+Use the helper functions:
+```bash
+ensure_numpy_from_artifacts  # From parallel_env.sh
+install_if_exists "torch-*.whl"  # From internal_container_build.sh
+```
+
+---
+
+## 5. Defensive Coding Standards
+
+Follow the patterns established in `PR_DIAGNOSIS.md` for C++ components:
+
+### Null Pointer Checks
+Always validate `argc`, `argv`, and `envp` before dereferencing:
+
+```cpp
+// CORRECT: Defensive pattern
+if (argv != nullptr) {
+    for (int i = 0; i < argc; i++) {
+        base_args.push_back(argv[i] ? std::string(argv[i]) : std::string());
+    }
+} else {
+    LOG_WRN("argv is null, continuing with empty base_args\n");
+}
+
+if (envp != nullptr) {
+    for (char ** env = envp; *env != nullptr; env++) {
+        if (*env != nullptr) {
+            base_env.push_back(std::string(*env));
+        }
+    }
+} else {
+    LOG_WRN("envp is null, continuing without base_env\n");
+}
+```
+
+### Error Handling
+- All build scripts **must** use `set -e` (exit on error).
+- Never silence errors with `2>/dev/null` without explicit handling.
+- Log warnings with clear context for debugging.
+
+---
+
+## 6. Artifact Management
+
+### Wheel Files
+- All `.whl` files **must** be directed to:
+  - `artifacts/` — Final, verified wheels
+  - `wheels/cache/` — Intermediate downloads/builds
+
+### Installation Order (MANDATORY)
+1. **NumPy** — Must be built/installed FIRST (BLAS/LAPACK optimization)
+2. **PyTorch 2.9.1** — Built from source with ROCm support
+3. **Triton/Vision** — After PyTorch
+4. **Acceleration libs** — flash-attn, xformers, bitsandbytes
+5. **Inference** — vLLM, llama.cpp
+
+### Verification
+Every script that uses PyTorch should include:
+```python
+python -c "import torch; assert 'rocm' in torch.__version__.lower() or torch.version.hip, 'ROCm PyTorch NOT found!'"
+```
+
+---
+
+## 7. Antigravity Sweep (NVIDIA Cleanup)
+
+When cleaning the workspace, run:
+```bash
+./scripts/07_cleanup_nvidia_bloat.sh
+```
+
+### Targeted Keywords for Removal
+- `nvidia`, `cuda`, `cublas`, `cudnn`, `nccl`, `triton` (NVIDIA variant)
+
+### Directories Cleaned
+- `wheels/cache/`
+- `wheels/cache/triton_deps/nvidia/`
+
+---
+
+## 7a. Wheels Directory Guard (Auto-Enforce)
+
+> [!CAUTION]
+> The `wheels/` directory must NEVER contain NVIDIA/CUDA artifacts.
+
+### Detection Patterns
+Any file matching these patterns should be **flagged for immediate deletion**:
+- `*nvidia*`
+- `*cuda*`
+- `*cudnn*`
+- `*nccl*`
+- `torch+cu*` (CUDA PyTorch variants)
+
+### Enforcement Commands
+```bash
+# Detect violations
+find wheels/ -iname "*nvidia*" -o -iname "*cuda*" 2>/dev/null
+
+# Auto-purge (run during cleanup)
+find wheels/ \( -iname "*nvidia*" -o -iname "*cuda*" \) -delete
+
+# Verify clean
+ls wheels/ | grep -iE "(nvidia|cuda)" && echo "VIOLATION DETECTED" || echo "Clean"
+```
+
+---
+
+## 7b. Error Log Protocol (MANDATORY)
+
+> [!IMPORTANT]
+> Agents **MUST** read `error.log` before proposing ANY fix.
+
+### Pre-Fix Checklist
+1. ☐ Read `error.log` completely
+2. ☐ Sign into `change.log` with status "IN_PROGRESS"
+3. ☐ Identify root cause from error patterns
+4. ☐ Only THEN propose/implement fixes
+
+### Violation Response
+If an agent proposes a fix without first reading `error.log`:
+- **Reject** the proposed fix
+- **Require** the agent to read the error log first
+- **Log** the protocol violation in `change.log`
+
+---
+
+## 8. Logging & History Protocol
+
+### On Build Failure
+1. **Read**: Inspect `error.log`
+2. **Sign In**: Add entry to `change.log` with random AI name and timestamp
+3. **Analyze**: Deep dive into implicated files
+4. **Fix**: Apply minimal, targeted repair
+5. **Cost**: Log token usage and estimated cost
+6. **Sign Out**: Update `change.log` with fix summary and recommendation
+
+### change.log Format
+```markdown
+## [Random-AI-Name] | [YYYY-MM-DD HH:MM]
+**Status**: IN_PROGRESS / FIXED
+**Error Reported**: [From error.log]
+**Files Implicated**: [Paths analyzed]
+**Deep Dive Findings**: [Root cause]
+**Applied Fix**: [Changes made]
+**Token Usage**: [Input/Output tokens, estimated cost]
+**Recommendation**: [Next steps for user]
+**End Time**: [YYYY-MM-DD HH:MM]
+```
+
+---
+
+## 8b. Autonomous Repair: Adaptive Handoff Protocol
+
+To prevent infinite failure loops and optimize token usage during automated repairs:
+
+### 1. Failure Monitoring
+Track sequential failures within a single Mission. If `scripts/silent_build_runner.sh` returns `failure` **3 times in a row**, enter a mandatory **Confidence Assessment** phase.
+
+### 2. Confidence Assessment
+Before attempting a **4th repair round**, perform a "Deep Think" self-evaluation of the proposed fix.
+
+> [!IMPORTANT]
+> If your internal confidence in the proposed 4th fix is **below 85%**, you **MUST** immediately halt all autonomous execution. Do not attempt the 4th build cycle.
+
+### 3. Termination & Handoff
+Upon halting due to the confidence threshold, you must generate a **Handoff Artifact** for the user including:
+- **Failure Summary**: Concise summary of the 3 failed attempts and why they did not resolve the issue.
+- **Handoff Prompt**: A prompt tailored for a more advanced model, containing the full error context from `error.log`.
+- **Model Recommendation**: Explicit recommendation to switch the Mission model to either **Gemini 3.0 Pro (High)** for deep reasoning or **Claude Opus 4.5** for complex architectural refactoring.
+
+### 4. change.log Documentation
+Sign out of `change.log` with:
+- **Status**: `ESCALATED`
+- **Applied Fix**: Document that the 85% confidence threshold was not met and autonomous execution was halted.
+
+---
+
+## 9. Escalation Protocol
+
+If a dependency conflict cannot be resolved from `artifacts/`:
+1. **Do NOT** add external PyPI indices
+2. **Do NOT** upgrade/downgrade core libraries
+3. **HALT** execution and notify the user
+4. Provide all relevant logs for escalation
+
+---
+
+## Quick Reference
+
+| Action                    | Command/Pattern                                    |
+|---------------------------|----------------------------------------------------|
+| Source parallelism        | `source scripts/parallel_env.sh && apply_parallel_env` |
+| Detect hardware           | `./scripts/00_detect_hardware.sh`                  |
+| Clean NVIDIA bloat        | `./scripts/07_cleanup_nvidia_bloat.sh`             |
+| Run silent build          | `./scripts/silent_build_runner.sh`                 |
+| Full Docker build         | `./scripts/80_run_complete_build_docker.sh`        |
+| Activate venv             | `source .venv/bin/activate`                        |
+| Check ROCm PyTorch        | `python -c "import torch; print(torch.version.hip)"` |
+
+---
+
+## 10. Shell Script Lock Protocol (CRITICAL)
+
+> [!CAUTION]
+> **NEVER** edit any shell script that has a corresponding `.lock` file without explicit user permission.
+
+### Lock Detection
+
+Before editing any `scripts/*.sh` file, check for a lock:
+```bash
+# Check if lock exists
+ls scripts/<script_name>.sh.lock
+
+# Or use the lock manager
+./scripts/lock_manager.sh --check scripts/<script_name>.sh
+```
+
+### Pattern Matching
+
+| Pattern | Action |
+|---------|--------|
+| `**/*.sh` | Check for `*.sh.lock` before editing |
+| `scripts/*.sh.lock` | NEVER modify directly |
+
+### Forbidden Actions
+
+- ❌ Editing a locked script without user's explicit "Unlock script X" request
+- ❌ Removing `.lock` files without authorization
+- ❌ Bypassing lock checks in build scripts
+- ❌ Modifying `build_config/dependency_matrix.json` to falsely mark scripts as unlocked
+
+### Permitted Actions
+
+- ✅ Reading a locked script
+- ✅ Checking lock status
+- ✅ Suggesting changes (pending user unlock approval)
+- ✅ Running `--scan-artifacts` to auto-lock successful builds
+
+### Unlock Procedure
+
+Only unlock when user explicitly requests:
+```bash
+./scripts/lock_manager.sh --unlock scripts/<script_name>.sh
+```
+
+### Lock Manager Commands
+
+| Command | Description |
+|---------|-------------|
+| `--lock <script>` | Lock a script after successful build |
+| `--unlock <script>` | Remove lock (requires user approval) |
+| `--check <script>` | Check lock status (exit 0=unlocked, 1=locked) |
+| `--scan-artifacts` | Auto-lock scripts with existing artifacts |
+| `--update-matrix` | Regenerate dependency_matrix.json |
+| `--status` | Show lock status of all build scripts |

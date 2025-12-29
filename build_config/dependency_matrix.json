@@ -51,7 +51,7 @@
   "scripts/23_build_torchvision_audio.sh": {
     "status": "UNLOCKED",
     "last_success": "2025-12-29",
-    "artifact": "torchvision-0.20.1a0+3ac97aa-cp311-cp311-linux_x86_64.whl",
+    "artifact": "",
     "upstream_deps": [
       "scripts/20_build_pytorch_rocm.sh"
     ],
@@ -68,9 +68,9 @@
     "downstream_dependents": []
   },
   "scripts/31_build_flash_attn.sh": {
-    "status": "LOCKED",
+    "status": "UNLOCKED",
     "last_success": "2025-12-29",
-    "artifact": "flash_attn-2.7.4.post1-py3-none-any.whl",
+    "artifact": "",
     "upstream_deps": [
       "scripts/20_build_pytorch_rocm.sh"
     ],

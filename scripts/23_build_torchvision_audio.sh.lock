@@ -1,0 +1,8 @@
+{
+    "locked_at": "2025-12-29_18-12-28",
+    "version": "1df0b9e",
+    "script": "./scripts/23_build_torchvision_audio.sh",
+    "artifact": "torchvision+torchaudio",
+    "backup": "/app/backups/locks/23_build_torchvision_audio_2025-12-29_18-12-28_1df0b9e",
+    "locked_by": "lock_manager"
+}

@@ -1,0 +1,77 @@
+=== FAIL: 20251229_181812 ===
+Log: build_logs/build_20251229_181812.log
+Code: 1
+
+--- DETECTED ERROR PATTERNS ---
+  /app/src/extras/xformers/third_party/composable_kernel_tiled/include/ck_tile/ops/fmha/pipeline/block_fmha_bwd_pipeline_default_policy_hip.hpp:729:31: error: division by zero is undefined [-Werror,-Wdivision-by-zero]
+  /app/src/extras/xformers/third_party/composable_kernel_tiled/include/ck_tile/ops/fmha/pipeline/block_fmha_bwd_pipeline_default_policy_hip.hpp:1810:37: error: division by zero is undefined [-Werror,-Wdivision-by-zero]
+  /app/src/extras/xformers/third_party/composable_kernel_tiled/include/ck_tile/ops/fmha/pipeline/block_fmha_bwd_pipeline_default_policy_hip.hpp:1811:43: error: division by zero is undefined [-Werror,-Wdivision-by-zero]
+  /app/src/extras/xformers/third_party/composable_kernel_tiled/include/ck_tile/ops/fmha/pipeline/block_fmha_bwd_pipeline_default_policy_hip.hpp:729:31: error: division by zero is undefined [-Werror,-Wdivision-by-zero]
+  /app/src/extras/xformers/third_party/composable_kernel_tiled/include/ck_tile/ops/fmha/pipeline/block_fmha_bwd_pipeline_default_policy_hip.hpp:729:31: error: division by zero is undefined [-Werror,-Wdivision-by-zero]
+  /app/src/extras/xformers/third_party/composable_kernel_tiled/include/ck_tile/ops/fmha/pipeline/block_fmha_bwd_pipeline_default_policy_hip.hpp:1810:37: error: division by zero is undefined [-Werror,-Wdivision-by-zero]
+  /app/src/extras/xformers/third_party/composable_kernel_tiled/include/ck_tile/ops/fmha/pipeline/block_fmha_bwd_pipeline_default_policy_hip.hpp:1811:43: error: division by zero is undefined [-Werror,-Wdivision-by-zero]
+  16 errors generated when compiling for gfx1151.
+  failed to execute:/opt/rocm-7.1.1/lib/llvm/bin/clang++  --offload-arch=gfx1151  -I/app/src/extras/xformers/xformers/csrc -I/app/src/extras/xformers/xformers/csrc/attention/hip_fmha -I/app/src/extras/xformers/third_party/composable_kernel_tiled/include -I/tmp/.local/lib/python3.11/site-packages/torch/include -I/tmp/.local/lib/python3.11/site-packages/torch/include/torch/csrc/api/include -I/tmp/.local/lib/python3.11/site-packages/torch/include/THH -I/opt/rocm-7.1.1/include -I/usr/include/python3.11 -c -c -x hip /app/src/extras/xformers/xformers/csrc/attention/hip_fmha/instances/fmha_batched_backward_bf16_has_causalmask_has_bias_has_biasgrad_has_dropout_maxk_128.hip -o "/app/src/extras/xformers/build/temp.linux-x86_64-cpython-311/xformers/csrc/attention/hip_fmha/instances/fmha_batched_backward_bf16_has_causalmask_has_bias_has_biasgrad_has_dropout_maxk_128.o" -D__HIP_PLATFORM_AMD__=1 -DUSE_ROCM=1 -DHIPBLAS_V2 -fPIC -DCUDA_HAS_FP16=1 -D__HIP_NO_HALF_OPERATORS__=1 -D__HIP_NO_HALF_CONVERSIONS__=1 -DHIP_ENABLE_WARP_SYNC_BUILTINS=1 -O3 -std=c++17 -U__HIP_NO_HALF_OPERATORS__ -U__HIP_NO_HALF_CONVERSIONS__ -DCK_TILE_FMHA_FWD_FAST_EXP2=1 -fgpu-flush-denormals-to-zero -Werror -Woverloaded-virtual -mllvm -enable-post-misched=0 -mllvm -amdgpu-early-inline-all=true -mllvm -amdgpu-function-calls=false -mllvm -greedy-reverse-local-assignment=1 -DBUILD_PYTHON_PACKAGE -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C -fno-gpu-rdc
+  Traceback (most recent call last):
+      raise CalledProcessError(retcode, process.args,
+  subprocess.CalledProcessError: Command '['ninja', '-v', '-j', '25']' returned non-zero exit status 1.
+  Traceback (most recent call last):
+      raise RuntimeError(message) from e
+  RuntimeError: Error compiling objects for extension
+  error: subprocess-exited-with-error
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+  Building wheel for xformers (pyproject.toml): finished with status 'error'
+  ERROR: Failed building wheel for xformers
+ERROR: Failed to build one or more wheels
+
+--- TAIL 50 ---
+    File "/tmp/.local/lib/python3.11/site-packages/setuptools/dist.py", line 1102, in run_command
+      super().run_command(command)
+    File "/tmp/.local/lib/python3.11/site-packages/setuptools/_distutils/dist.py", line 1021, in run_command
+      cmd_obj.run()
+    File "/tmp/.local/lib/python3.11/site-packages/setuptools/_distutils/command/build.py", line 135, in run
+      self.run_command(cmd_name)
+    File "/tmp/.local/lib/python3.11/site-packages/setuptools/_distutils/cmd.py", line 357, in run_command
+      self.distribution.run_command(command)
+    File "/tmp/.local/lib/python3.11/site-packages/setuptools/dist.py", line 1102, in run_command
+      super().run_command(command)
+    File "/tmp/.local/lib/python3.11/site-packages/setuptools/_distutils/dist.py", line 1021, in run_command
+      cmd_obj.run()
+    File "/tmp/.local/lib/python3.11/site-packages/setuptools/command/build_ext.py", line 96, in run
+      _build_ext.run(self)
+    File "/tmp/.local/lib/python3.11/site-packages/setuptools/_distutils/command/build_ext.py", line 368, in run
+      self.build_extensions()
+    File "<string>", line 641, in build_extensions
+    File "/tmp/.local/lib/python3.11/site-packages/torch/utils/cpp_extension.py", line 1082, in build_extensions
+      build_ext.build_extensions(self)
+    File "/tmp/.local/lib/python3.11/site-packages/setuptools/_distutils/command/build_ext.py", line 484, in build_extensions
+      self._build_extensions_serial()
+    File "/tmp/.local/lib/python3.11/site-packages/setuptools/_distutils/command/build_ext.py", line 510, in _build_extensions_serial
+      self.build_extension(ext)
+    File "/tmp/.local/lib/python3.11/site-packages/setuptools/command/build_ext.py", line 261, in build_extension
+      _build_ext.build_extension(self, ext)
+    File "/usr/local/lib/python3.11/dist-packages/Cython/Distutils/build_ext.py", line 136, in build_extension
+      super().build_extension(ext)
+    File "/tmp/.local/lib/python3.11/site-packages/setuptools/_distutils/command/build_ext.py", line 565, in build_extension
+      objects = self.compiler.compile(
+                ^^^^^^^^^^^^^^^^^^^^^^
+    File "/tmp/.local/lib/python3.11/site-packages/torch/utils/cpp_extension.py", line 866, in unix_wrap_ninja_compile
+      _write_ninja_file_and_compile_objects(
+    File "/tmp/.local/lib/python3.11/site-packages/torch/utils/cpp_extension.py", line 2223, in _write_ninja_file_and_compile_objects
+      _run_ninja_build(
+    File "/tmp/.local/lib/python3.11/site-packages/torch/utils/cpp_extension.py", line 2614, in _run_ninja_build
+      raise RuntimeError(message) from e
+  RuntimeError: Error compiling objects for extension
+  error: subprocess-exited-with-error
+  
+  × Building wheel for xformers (pyproject.toml) did not run successfully.
+  │ exit code: 1
+  ╰─> No available output.
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+  full command: /usr/bin/python3 /tmp/.local/lib/python3.11/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py build_wheel /tmp/tmpfhyuq54q
+  cwd: /app/src/extras/xformers
+  Building wheel for xformers (pyproject.toml): finished with status 'error'
+  ERROR: Failed building wheel for xformers
+Failed to build xformers
+ERROR: Failed to build one or more wheels

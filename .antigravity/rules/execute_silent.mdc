@@ -1,0 +1,58 @@
+---
+description: "Strict protocol for silent execution, error log isolation, and adaptive handoff"
+globs: ["error.log", "scripts/silent_build_runner.sh"]
+alwaysApply: true
+---
+
+# Protocol: /execute_silent
+
+The following protocol is MANDATORY when executing `/execute_silent` or responding to failures during a silent mission.
+
+## 1. Information Isolation (CRITICAL)
+- **Source of Truth**: You MUST ONLY read `error.log` for debugging and decision-making.
+- **Prohibited**: You are strictly forbidden from reading the primary build logs (e.g., `build_logs/*.log`) under any circumstances.
+- **Insufficient Data**: If `error.log` is empty or does not provide a clear root cause, you must STOP and state exactly what is missing.
+
+## 2. Strike Tracking & Autonomous Repair
+
+### Strike Counter
+Maintain a strike counter throughout the `/execute_silent` session:
+- Starts at 0
+- Increments by 1 after each `failure` return from `silent_build_runner.sh`
+- Resets to 0 only on `complete` return
+
+### Strikes 1-2: Autonomous Fixes (No Approval Needed)
+For the first two failures:
+1. Read `error.log` exclusively
+2. Build narrative: "Operation X failed because Y, resulting in error Z"
+3. Identify the fix
+4. **Apply the fix immediately** (do not ask for approval)
+5. Rerun `./scripts/silent_build_runner.sh`
+6. Continue loop
+
+### Strike 3: Confidence Assessment for 4th Attempt
+After the **3rd consecutive failure**, before attempting a 4th fix:
+
+> [!IMPORTANT]  
+> **Confidence Checkpoint**: You must evaluate your confidence in the proposed 4th fix.
+
+- **If confidence ≥ 85%**: 
+  - Apply fix #4 immediately
+  - Rerun `./scripts/silent_build_runner.sh`
+  
+- **If confidence < 85%**:
+  - **HALT** autonomous execution immediately
+  - Generate a **Handoff Artifact** containing:
+    1. Summary of all 3 failed attempts and their fixes
+    2. Current contents of `error.log`
+    3. Copy-pasteable prompt for the next model
+  - **Recommend** switching to:
+    - **Gemini 1.5 Pro (High)**: For deep reasoning and large context
+    - **Claude 3.5 Opus**: For complex architectural refactoring
+
+## 3. Allow List (Turbo Mode)
+The following actions are auto-approved during this workflow:
+- Reading `error.log`
+- Running `./scripts/silent_build_runner.sh`
+- Making code edits to fix issues identified in `error.log`
+- `grep` on log files (read-only)

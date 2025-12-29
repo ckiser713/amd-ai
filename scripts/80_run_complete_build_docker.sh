@@ -150,6 +150,10 @@ if ! grep -q "cd /tmp && python" scripts/22_build_triton_rocm.sh; then
     sed -i 's/python -c/cd \/tmp \&\& python -c/g' scripts/22_build_triton_rocm.sh
 fi
 
+# 8. Fix xformers ck_tile warpSize constexpr error
+sed -i 's/return warpSize;/#if defined(__AMDGCN_WAVEFRONT_SIZE__)\n    return __AMDGCN_WAVEFRONT_SIZE__;\n#else\n    return warpSize;\n#endif/g' src/extras/xformers/third_party/composable_kernel_tiled/include/ck_tile/core/arch/arch.hpp
+sed -i 's/return warpSize;/#if defined(__AMDGCN_WAVEFRONT_SIZE__)\n    return __AMDGCN_WAVEFRONT_SIZE__;\n#else\n    return warpSize;\n#endif/g' src/extras/xformers/third_party/composable_kernel_tiled/include/ck_tile/core/arch/arch_hip.hpp
+
 # Step C: Execute the Build Pipeline
 # Injected Env Vars:
 #   MAX_JOBS: Pinned job count (80% of host)
