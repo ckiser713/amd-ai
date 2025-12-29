@@ -45,7 +45,7 @@ cd "$SRC_DIR"
 rm -rf build
 
 # Install build dependencies
-pip install -q cmake ninja numpy packaging
+pip install -q cmake ninja packaging
 
 export PYTORCH_ROCM_ARCH="gfx1151"
 export ROCM_VERSION="7.1.1"
@@ -74,7 +74,8 @@ cp build/Linux/Release/dist/onnxruntime*.whl "$ARTIFACTS_DIR/"
 # Install
 pip install --force-reinstall "$ARTIFACTS_DIR"/onnxruntime*.whl
 
-# Verify
+# Verify (change directory to avoid importing from source tree)
+cd "$ROOT_DIR"
 echo ""
 echo "=== Verification ==="
 python -c "

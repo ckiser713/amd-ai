@@ -2,35 +2,60 @@
 # scripts/internal_container_build.sh
 set -e
 
-echo 'Starting Build Pipeline inside Container...'
-echo "Python Version: $(python3 --version)"
-if [[ ! $(python3 --version) == *"3.11"* ]]; then
-    echo "❌ Error: Python 3.11 is required but found $(python3 --version)"
-    exit 1
+# Ensure we have the environment variables we expect
+echo ">>> Internal Build: Max Jobs=$MAX_JOBS, Mode=$PARALLEL_MODE"
+
+ARTIFACTS_DIR="/app/artifacts"
+
+# Pre-build cleanup: Remove stale CMake caches from host builds
+# These cause path mismatch errors when building in Docker with mounted source volumes
+echo ">>> Cleaning stale CMake caches from source directories..."
+for src_dir in /app/src/pytorch /app/src/extras/*; do
+    if [[ -d "$src_dir" ]]; then
+        rm -rf "$src_dir/build/aotriton" 2>/dev/null || true
+        rm -rf "$src_dir/build/CMakeCache.txt" 2>/dev/null || true
+        rm -rf "$src_dir/build/CMakeFiles" 2>/dev/null || true
+        rm -f "$src_dir/CMakeCache.txt" 2>/dev/null || true
+        rm -rf "$src_dir/CMakeFiles" 2>/dev/null || true
+    fi
+done
+echo ">>> CMake cache cleanup complete"
+
+# Helper: Install existing wheels from artifacts if they exist
+install_if_exists() {
+    local pattern="$1"
+    if ls "$ARTIFACTS_DIR"/$pattern 1> /dev/null 2>&1; then
+        echo ">>> Installing existing artifact: $pattern"
+        pip install --force-reinstall --no-deps "$ARTIFACTS_DIR"/$pattern || true
+    fi
+}
+
+# 0. Setup Python Environment inside container
+if [[ -f scripts/02_install_python_env.sh ]]; then
+    ./scripts/02_install_python_env.sh
 fi
 
-# 1. Install/Verify Python Environment
-# Inside the container, we rely on the pre-installed Python 3.11 and the PIP_FIND_LINKS environment variable.
-./scripts/02_install_python_env.sh
-
-# 2. Parallel Prefetch (Skipped inside container as it requires internet)
-echo ">>> Skipping git prefetch (already completed on host)..."
-
-# 3. Compile Scripts In Order
-./scripts/20_build_pytorch_rocm.sh
-# Ensure PyTorch is available for downstream builds even if build was skipped
-if ls artifacts/torch-*.whl 1> /dev/null 2>&1; then
-    pip install artifacts/torch-*.whl --no-deps --force-reinstall
-fi
-
-./scripts/22_build_triton_rocm.sh
-# Ensure Triton is available for downstream builds even if build was skipped
-if ls artifacts/triton-*.whl 1> /dev/null 2>&1; then
-    pip install artifacts/triton-*.whl --no-deps --force-reinstall
-fi
-
-./scripts/23_build_torchvision_audio.sh
+# 1. Build NumPy FIRST (Base dependency for PyTorch, Triton, etc.)
+install_if_exists "numpy-*.whl"
 ./scripts/24_build_numpy_rocm.sh
+
+# 2. Build/Install Core Infrastructure (Needs NumPy)
+install_if_exists "torch-*.whl"
+./scripts/20_build_pytorch_rocm.sh
+
+install_if_exists "triton-*.whl"
+./scripts/22_build_triton_rocm.sh
+
+# 3. Build Pillow-SIMD (Optional but recommended before Vision)
+install_if_exists "pillow-*.whl"
+./scripts/39_build_pillow_simd.sh
+
+# 4. Build downstream ML libraries
+install_if_exists "torchvision-*.whl"
+install_if_exists "torchaudio-*.whl"
+./scripts/23_build_torchvision_audio.sh
+
+# 5. Build remaining ML libraries
 ./scripts/31_build_flash_attn.sh
 ./scripts/32_build_xformers.sh
 ./scripts/33_build_bitsandbytes.sh
@@ -39,20 +64,12 @@ fi
 ./scripts/36_build_cupy_rocm.sh
 ./scripts/37_build_faiss_rocm.sh
 ./scripts/38_build_opencv_rocm.sh
-./scripts/39_build_pillow_simd.sh
 ./scripts/30_build_vllm_rocm_or_cpu.sh
 ./scripts/42_build_llama_cpp_b7551.sh
 
-# 4. Generate stack installer
-echo ">>> Generating install-gfx1151-stack.sh..."
-cat > artifacts/install-gfx1151-stack.sh << 'EOF'
-#!/usr/bin/env bash
-set -e
-echo "Installing Zenith MPG-1 Stack (gfx1151)..."
-# Force reinstall of wheels in artifacts/
-pip install --force-reinstall --no-deps artifacts/*.whl
-echo "Done. Stack installed."
-EOF
-chmod +x artifacts/install-gfx1151-stack.sh
-
-echo 'Build Pipeline Completed Successfully!'
+# 6. Generate stack installer
+if [[ -f scripts/internal_gen_stack.sh ]]; then
+    ./scripts/internal_gen_stack.sh
+else
+    echo "Warning: scripts/internal_gen_stack.sh not found, skipping installer generation."
+fi

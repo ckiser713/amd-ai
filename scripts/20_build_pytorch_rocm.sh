@@ -105,9 +105,12 @@ fi
 # shellcheck disable=SC1090
 source "$VENV_DIR/bin/activate"
 
-# Clean previous builds
+# Clean previous builds (aggressive clean to avoid CMake cache issues)
 rm -rf "$BUILD_DIR"
 rm -rf dist
+rm -rf build/aotriton  # Clean aotriton cache to prevent path mismatch errors
+rm -f CMakeCache.txt
+rm -rf CMakeFiles
 mkdir -p "$BUILD_DIR"
 export CMAKE_FRESH=1
 
@@ -137,8 +140,8 @@ else
     echo "Ninja not found, falling back to make"
 fi
 
-# Build the wheel
-python setup.py bdist_wheel -- "-j$MAX_JOBS"
+# Build the wheel (NINJAFLAGS already set by parallel_env.sh)
+python setup.py bdist_wheel
 
 # Find and install the built wheel
 WHEEL_FILE=$(find dist -name "*.whl" | head -1)

@@ -55,7 +55,8 @@ pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" --no-build-isolation -v
 # Install
 pip install --force-reinstall "$ARTIFACTS_DIR"/bitsandbytes-*.whl
 
-# Verify
+# Verify (change directory to avoid importing from source tree)
+cd "$ROOT_DIR"
 python -c "
 import bitsandbytes as bnb
 print(f'bitsandbytes imported')

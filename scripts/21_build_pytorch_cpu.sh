@@ -87,15 +87,15 @@ echo "Git parallel jobs: $GIT_JOBS"
 # Build with optimized parallelism
 python setup.py clean
 
-# Use ninja for faster builds if available
+# Use ninja for faster builds if available (NINJAFLAGS already set by parallel_env.sh)
 if command -v ninja &> /dev/null; then
     echo "Using ninja build system for optimal parallelism"
     export USE_NINJA=1
     export CMAKE_GENERATOR=Ninja
     python setup.py bdist_wheel --cmake
 else
-    # Aggressive make parallelism
-    python setup.py bdist_wheel --cmake -- "-j$MAX_JOBS" "--output-sync=target"
+    # Make parallelism (MAKEFLAGS already set by parallel_env.sh)
+    python setup.py bdist_wheel --cmake
 fi
 
 # Install the wheel
@@ -115,7 +115,8 @@ if [[ -n "$WHEEL_FILE" ]]; then
     cp "$WHEEL_FILE" "$ARTIFACTS_DIR/"
     echo "Wheel copied to: $ARTIFACTS_DIR/$(basename \"$WHEEL_FILE\")"
     
-    # Verify
+    # Verify (change directory to avoid importing from source tree)
+    cd "$ROOT_DIR"
     python -c "
 import torch
 print(f'PyTorch CPU version: {torch.__version__}')

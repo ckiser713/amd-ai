@@ -41,18 +41,25 @@ rm -rf build dist
 pip install -q setuptools wheel
 
 # Override CFLAGS with Pillow-SIMD specific optimizations for Zen 5
-# Include -ffast-math for SIMD image processing (safe for image ops)
-export CFLAGS="-O3 -march=znver5 -mtune=znver5 -mavx512f -mavx512bw -mavx512vl -mavx512dq -mavx512vbmi -ffast-math -flto=auto"
+# Override CFLAGS with Pillow-SIMD specific optimizations
+# Use detected architecture or fallback to znver4 for compatibility
+ARCH="${DETECTED_CPU_ARCH:-znver4}"
+echo "Building for Architecture: $ARCH"
+
+export CFLAGS="-O3 -march=$ARCH -mtune=$ARCH -mavx512f -mavx512bw -mavx512vl -mavx512dq -mavx512vbmi -flto=auto"
+export LDFLAGS="${LDFLAGS:-} -lm -lmvec"
+export LIBS="-lm -lmvec"
 export CC="${CC:-gcc}"
 
-# Build wheel with explicit parallel compilation
-pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" -v
+# Build wheel with explicit parallel compilation and NO isolation to respect env vars
+pip wheel . --no-deps --no-build-isolation --wheel-dir="$ARTIFACTS_DIR" -v
 
 # Remove standard Pillow and install SIMD version
 pip uninstall -y Pillow pillow-simd 2>/dev/null || true
 pip install --force-reinstall --no-deps "$ARTIFACTS_DIR"/pillow*.whl
 
-# Verify
+# Verify (change directory to avoid importing from source tree)
+cd "$ROOT_DIR"
 echo ""
 echo "=== Verification ==="
 python -c "

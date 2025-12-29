@@ -8,27 +8,19 @@ mkdir -p src wheels
 
 # Create virtual environment (using system Python 3.11)
 if [[ ! -d ".venv" ]]; then
-    python3.11 -m venv .venv
-    echo "✅ Virtual environment created"
+    python3.11 -m venv --system-site-packages .venv
+    echo "✅ Virtual environment created (with system site-packages)"
 fi
 
 # Activate virtual environment
 source .venv/bin/activate
 
 # Upgrade pip and setuptools inside the virtual environment
-pip install --upgrade pip setuptools wheel
+# In offline mode, these should already be in wheels/cache from prefetch
+pip install --upgrade pip setuptools wheel || true
 
-# Install build dependencies
-pip install \
-    ninja \
-    pyyaml \
-    typing-extensions \
-    numpy \
-    scipy \
-    requests \
-    psutil \
-    tqdm \
-    packaging
+# Build dependencies are installed in the Docker image itself
+# This script just ensures the venv is set up correctly
 
 # Install development tools only if not in offline mode
 if [[ -z "${PIP_NO_INDEX:-}" ]]; then
@@ -36,14 +28,14 @@ if [[ -z "${PIP_NO_INDEX:-}" ]]; then
     pip install \
         jupyter \
         matplotlib \
-        pandas
+        pandas || true
 
     # Install development tools
     pip install \
         black \
         flake8 \
         mypy \
-        pytest
+        pytest || true
 fi
 
 # Create activation script
@@ -62,4 +54,4 @@ echo "   To activate: source .venv/bin/activate"
 echo "   Or use: ./activate_env.sh"
 echo ""
 echo "📋 Installed packages:"
-pip list --format=columns | grep -E "(Package|Version|-----|numpy|scipy|torch)"
+pip list --format=columns | grep -E "(Package|Version|-----|numpy|scipy|torch)" || true

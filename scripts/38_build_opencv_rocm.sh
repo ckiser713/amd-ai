@@ -51,7 +51,7 @@ rm -rf build
 mkdir -p build && cd build
 
 # Install build dependencies
-pip install -q numpy
+# numpy should already be installed from source build
 
 # CMake configuration with Ninja for faster builds
 cmake .. \
@@ -97,7 +97,8 @@ if [ -n "$OPENCV_PYTHON_SO" ]; then
     touch "${SITE_PACKAGES}/cv2/__init__.py"
 fi
 
-# Verify
+# Verify (change directory to avoid importing from source tree)
+cd "$ROOT_DIR"
 echo ""
 echo "=== Verification ==="
 python -c "

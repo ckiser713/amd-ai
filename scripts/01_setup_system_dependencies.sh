@@ -60,7 +60,14 @@ sudo apt-get install -y \
     libreadline-dev \
     libncursesw5-dev \
     libbz2-dev \
-    liblzma-dev
+    liblzma-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    libpng-dev \
+    libtiff-dev \
+    libfreetype6-dev \
+    liblcms2-dev \
+    libwebp-dev
 
 # Utilities
 sudo apt-get install -y \

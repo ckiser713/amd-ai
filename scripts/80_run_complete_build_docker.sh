@@ -25,6 +25,29 @@ done
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+# --- Host Context Setup ---
+# Source environment and hardware detection on the host
+if [[ -f scripts/parallel_env.sh ]]; then
+    source scripts/parallel_env.sh
+fi
+
+if [[ -f build_config/hw_detected.env ]]; then
+    source build_config/hw_detected.env
+else
+    echo "Warning: build_config/hw_detected.env not found. Hardware info may be missing."
+fi
+
+# Calculate Host-Calculated Parallelism
+# 80% of system capacity to avoid freezing the host, pinned for the container.
+TOTAL_CORES=$(nproc)
+TARGET_JOBS=$(( TOTAL_CORES * 80 / 100 ))
+if [[ "$TARGET_JOBS" -lt 1 ]]; then TARGET_JOBS=1; fi
+
+echo "=== Host-Side Parallelism Calculation ==="
+echo "Host Cores: $TOTAL_CORES"
+echo "Target Jobs (80%): $TARGET_JOBS"
+echo "Detected Arch: CPU=${DETECTED_CPU_ARCH:-unknown}, GPU=${DETECTED_GPU_ARCH:-unknown}"
+
 # Kill any running amd-ai-builder containers
 echo "=== Cleaning up old containers ==="
 docker ps -a --filter "ancestor=amd-ai-builder:local" --format "{{.ID}}" | xargs -r docker kill 2>/dev/null || true
@@ -56,18 +79,32 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     wget \
     libopenblas-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    libpng-dev \
+    libtiff-dev \
+    libfreetype6-dev \
+    liblcms2-dev \
+    libwebp-dev \
+    liblzma-dev \
+    libffi-dev \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # Set Python 3.11 as default
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
     update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
 
-# Ensure pip is installed for Python 3.11 and allow breaking system packages for initial setup if needed
+# Ensure pip is installed for Python 3.11 and install essential build dependencies
 RUN python3.11 -m pip install --upgrade pip --break-system-packages || true
+RUN python3.11 -m pip install --break-system-packages \
+    ninja meson meson-python cython pybind11 \
+    setuptools wheel packaging pyyaml typing-extensions \
+    sympy mpmath requests psutil tqdm || true
 
 # Set Environment Variables
 ENV ROCM_PATH=/opt/rocm
-ENV PATH=$ROCM_PATH/bin:$ROCM_PATH/llvm/bin:$PATH
+ENV PATH=\$ROCM_PATH/bin:\$ROCM_PATH/llvm/bin:\$PATH
 
 WORKDIR /app
 EOF
@@ -101,7 +138,10 @@ rm -rf src/extras/triton-rocm/python/triton/backends/nvidia
 sed -i 's/python -c/cd \/tmp \&\& python -c/g' scripts/22_build_triton_rocm.sh
 
 # Step C: Execute the Build Pipeline
-# Note: Using a single bash -c command string as requested.
+# Injected Env Vars:
+#   MAX_JOBS: Pinned job count (80% of host)
+#   PARALLEL_MODE: 'pin' (forces container scripts to respect MAX_JOBS)
+#   DETECTED_*: Hardware info
 docker run --rm \
     -v "$ROOT_DIR:/app" \
     --user "$(id -u):$(id -g)" \
@@ -114,6 +154,10 @@ docker run --rm \
     -e HOME=/tmp \
     -e PIP_NO_INDEX=1 \
     -e PIP_FIND_LINKS=/app/wheels/cache \
+    -e MAX_JOBS="$TARGET_JOBS" \
+    -e PARALLEL_MODE=pin \
+    -e DETECTED_GPU_ARCH="${DETECTED_GPU_ARCH:-}" \
+    -e DETECTED_CPU_ARCH="znver4" \
     amd-ai-builder:local \
     bash scripts/internal_container_build.sh
 

@@ -224,7 +224,8 @@ apply_parallel_env() {
 
 # Zen 5 specific CPU flags for maximum performance
 apply_zen5_cflags() {
-  local base_cflags="-march=znver5 -mtune=znver5 -O3 -pipe -fno-plt -fexceptions"
+  local arch="${DETECTED_CPU_ARCH:-znver5}"
+  local base_cflags="-march=$arch -mtune=$arch -O3 -pipe -fno-plt -fexceptions"
   local avx_flags="-mavx512f -mavx512bw -mavx512vl -mavx512dq -mavx512cd -mavx512vbmi -mavx512vbmi2 -mavx512vnni -mavx512bitalg -mavx512vpopcntdq"
   local lto_flags="-flto=auto -fuse-linker-plugin"
   

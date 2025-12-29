@@ -90,7 +90,8 @@ else
     pip install "$ARTIFACTS_DIR"/torchaudio-2.5.1*.whl --force-reinstall --no-deps
 fi
 
-# Verify
+# Verify (change directory to avoid importing from source tree)
+cd "$ROOT_DIR"
 python -c "
 import torch, torchvision, torchaudio
 print(f'torch: {torch.__version__}')

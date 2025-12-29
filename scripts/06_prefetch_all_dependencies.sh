@@ -21,6 +21,7 @@ mkdir -p "$WHEELS_CACHE"
 # and we target cp311 for the build environment
 PACKAGES=(
     "pip" "setuptools" "wheel" "ninja" "cmake" "packaging" "pybind11" "swig"
+    "meson" "meson-python" "cython"
     "transformers>=4.56.0" "accelerate" "setuptools-scm>=8" 
     "sentencepiece" "protobuf" "fastapi[standard]>=0.115.0" "aiohttp" "openai>=1.99.1" 
     "pydantic>=2.12.0" "tiktoken>=0.6.0" "lm-format-enforcer==0.11.3" 

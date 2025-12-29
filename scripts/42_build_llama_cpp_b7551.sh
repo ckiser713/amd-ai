@@ -48,8 +48,8 @@ cmake -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=hipcc \
     -DCMAKE_CXX_COMPILER=hipcc \
-    -DCMAKE_C_FLAGS="-O3 -march=znver5 -flto=auto" \
-    -DCMAKE_CXX_FLAGS="-O3 -march=znver5 -flto=auto" \
+    -DCMAKE_C_FLAGS="${CFLAGS}" \
+    -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
     -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
     -DGGML_NATIVE=ON \
     -DGGML_LTO=ON \

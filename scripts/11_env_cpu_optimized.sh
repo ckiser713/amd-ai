@@ -16,14 +16,15 @@ fi
 export CPU_ARCH="${DETECTED_CPU_ARCH:-znver5}"
 
 # Full Zen 5 / Strix Halo AVX-512 optimization flags
-# Zen 5 supports: AVX-512F, AVX-512BW, AVX-512VL, AVX-512DQ, AVX-512CD, 
-#                 AVX-512VBMI, AVX-512VBMI2, AVX-512VNNI, AVX-512BITALG, AVX-512VPOPCNTDQ
-if [[ "$CPU_ARCH" == "znver5" ]]; then
+# Zen 5 and Zen 4 support AVX-512 extensions
+if [[ "$CPU_ARCH" == "znver5" ]] || [[ "$CPU_ARCH" == "znver4" ]]; then
     AVX512_FLAGS="-mavx512f -mavx512bw -mavx512vl -mavx512dq -mavx512cd"
     AVX512_FLAGS="$AVX512_FLAGS -mavx512vbmi -mavx512vbmi2 -mavx512vnni"
     AVX512_FLAGS="$AVX512_FLAGS -mavx512bitalg -mavx512vpopcntdq"
-    AVX512_FLAGS="$AVX512_FLAGS -mavx512bf16"  # BFloat16 support on Zen 5
     
+    # bf16 is supported on Zen 4 and 5
+    AVX512_FLAGS="$AVX512_FLAGS -mavx512bf16"
+
     export CFLAGS="-march=$CPU_ARCH -mtune=$CPU_ARCH -O3 $AVX512_FLAGS -pipe -fno-plt -fexceptions -flto=auto -fuse-linker-plugin"
     export CXXFLAGS="-march=$CPU_ARCH -mtune=$CPU_ARCH -O3 $AVX512_FLAGS -pipe -fno-plt -fexceptions -flto=auto -fuse-linker-plugin"
 else
@@ -32,8 +33,8 @@ else
 fi
 
 # Linker optimization - prefer mold > lld > gold > ld
-# Linker optimization - default to system linker for GCC LTO compatibility
-export LDFLAGS="-Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now -flto=auto"
+# Default to system linker for GCC LTO compatibility, ensure math/vector libs linked
+export LDFLAGS="-Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now -flto=auto -lm -lmvec"
 
 CPU_CORES=${DETECTED_CPU_CORES:-$(nproc --all 2>/dev/null || echo 1)}
 if ((CPU_CORES > 0)); then

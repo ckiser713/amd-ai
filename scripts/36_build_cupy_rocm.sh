@@ -75,7 +75,8 @@ pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" -vvv
 # Install
 pip install --force-reinstall "$ARTIFACTS_DIR"/cupy-*.whl
 
-# Verify
+# Verify (change directory to avoid importing from source tree)
+cd "$ROOT_DIR"
 echo ""
 echo "=== Verification ==="
 python -c "

@@ -45,7 +45,7 @@ cd "$SRC_DIR"
 rm -rf build
 
 # Install build dependencies
-pip install -q numpy swig
+pip install -q swig
 
 # Create build directory
 mkdir -p build && cd build
@@ -76,7 +76,8 @@ pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR"
 # Install
 pip install --force-reinstall "$ARTIFACTS_DIR"/faiss*.whl
 
-# Verify
+# Verify (change directory to avoid importing from source tree)
+cd "$ROOT_DIR"
 echo ""
 echo "=== Verification ==="
 python -c "
