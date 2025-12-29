@@ -9,6 +9,13 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 source scripts/11_env_cpu_optimized.sh
 
+# Idempotency check: Skip if any PyTorch wheel exists
+ARTIFACTS_DIR="$ROOT_DIR/artifacts"
+if ls "$ARTIFACTS_DIR"/torch-*.whl 1> /dev/null 2>&1; then
+    echo "✅ PyTorch already exists in artifacts/, skipping CPU build."
+    exit 0
+fi
+
 # Configuration
 PYTORCH_VERSION="2.9.1"
 PYTORCH_SRC_DIR="${PYTORCH_SRC_DIR:-src/pytorch-cpu}"

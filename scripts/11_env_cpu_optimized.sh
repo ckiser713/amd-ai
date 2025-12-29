@@ -32,13 +32,8 @@ else
 fi
 
 # Linker optimization - prefer mold > lld > gold > ld
-if command -v mold &> /dev/null; then
-    export LDFLAGS="-Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now -flto=auto -fuse-ld=mold"
-elif command -v ld.lld &> /dev/null; then
-    export LDFLAGS="-Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now -flto=auto -fuse-ld=lld"
-else
-    export LDFLAGS="-Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now -flto=auto"
-fi
+# Linker optimization - default to system linker for GCC LTO compatibility
+export LDFLAGS="-Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now -flto=auto"
 
 CPU_CORES=${DETECTED_CPU_CORES:-$(nproc --all 2>/dev/null || echo 1)}
 if ((CPU_CORES > 0)); then

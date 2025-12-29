@@ -79,6 +79,10 @@ sed -i 's/python -c/cd \/tmp \&\& python -c/g' scripts/22_build_triton_rocm.sh
 docker run --rm \
     -v "$ROOT_DIR:/app" \
     --user "$(id -u):$(id -g)" \
+    --device=/dev/kfd \
+    --device=/dev/dri \
+    --group-add video \
+    --ipc=host \
     -v "$ROOT_DIR/wheels/cache/triton_deps:/tmp/.triton" \
     -e ROCM_PATH=/opt/rocm \
     -e HOME=/tmp \

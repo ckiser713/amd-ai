@@ -138,7 +138,7 @@ else
 fi
 
 # Build the wheel
-python setup.py bdist_wheel
+python setup.py bdist_wheel -- "-j$MAX_JOBS"
 
 # Find and install the built wheel
 WHEEL_FILE=$(find dist -name "*.whl" | head -1)
