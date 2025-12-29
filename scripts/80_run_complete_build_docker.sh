@@ -81,6 +81,8 @@ RUN apt-get update && apt-get install -y \
     python3.11-dev \
     python3.11-full \
     python3-pip \
+    gcc-14 \
+    g++-14 \
     git \
     cmake \
     ninja-build \
@@ -99,8 +101,9 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Python 3.11 as default
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
+# Set GCC 14 and Python 3.11 as default
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 --slave /usr/bin/g++ g++ /usr/bin/g++-14 && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
     update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
 
 # Ensure pip is installed for Python 3.11 and install essential build dependencies
