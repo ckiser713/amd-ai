@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.env
+.env.local
+
+# Build / Artifacts
+artifacts/
+wheels/
+*.whl
+*.tar.gz
+*.zip
+*.bin
+*.model
+*.pt
+*.pth
+*.onnx
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

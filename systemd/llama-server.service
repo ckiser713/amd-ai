@@ -1,0 +1,41 @@
+[Unit]
+Description=Llama.cpp Server Router
+Documentation=https://github.com/ggml-org/llama.cpp
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/llama-server --router --port 8080 --models-dir /var/lib/llama/models
+Restart=on-failure
+RestartSec=5
+User=llama
+Group=llama
+
+# Security and resource limits
+NoNewPrivileges=true
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/llama/models
+ReadWritePaths=/var/run/llama
+
+# Standard systemd hardening options
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=llama-server
+
+# Optional: core dumps disabled by default (security)
+# Uncomment for debugging:
+# LimitCORE=infinity
+
+[Install]
+WantedBy=multi-user.target

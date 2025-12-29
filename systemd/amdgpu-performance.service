@@ -1,0 +1,12 @@
+[Unit]
+Description=Set AMD GPU(s) to performance mode at boot
+After=multi-user.target
+Wants=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/set-amdgpu-performance.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

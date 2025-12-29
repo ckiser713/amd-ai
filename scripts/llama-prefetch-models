@@ -1,0 +1,166 @@
+#!/bin/bash
+#
+# llama-prefetch-models: Download/cache models with graceful error handling
+#
+# This script prefetches Hugging Face models without crashing on 404s or network errors.
+# It logs warnings but continues the process instead of exiting immediately.
+#
+# Usage:
+#   llama-prefetch-models [-d DIR] [-t TIMEOUT] MODEL1 [MODEL2 ...]
+#
+
+set -o pipefail
+
+CACHE_DIR="${CACHE_DIR:-.}"
+TIMEOUT="${TIMEOUT:-300}"
+HF_ENDPOINT="${HF_ENDPOINT:-https://huggingface.co}"
+MAX_RETRIES="${MAX_RETRIES:-3}"
+RETRY_DELAY="${RETRY_DELAY:-5}"
+LOG_FILE="${LOG_FILE:-./prefetch-models.log}"
+
+trap 'true' PIPE
+
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+}
+
+warn() {
+    echo "[WARN] $*" | tee -a "$LOG_FILE"
+}
+
+error() {
+    echo "[ERROR] $*" | tee -a "$LOG_FILE"
+}
+
+info() {
+    echo "[INFO] $*" | tee -a "$LOG_FILE"
+}
+
+usage() {
+    cat >&2 <<EOF
+Usage: $0 [options] MODEL1 [MODEL2 ...]
+
+Options:
+  -d DIR       Cache directory (default: current dir)
+  -t TIMEOUT   Download timeout in seconds (default: 300)
+  -h           Show this help message
+
+Examples:
+  $0 -d /var/lib/llama/models meta-llama/Llama-2-7b-hf
+  $0 mistralai/Mistral-7B-Instruct-v0.1
+EOF
+    exit 1
+}
+
+# Download a single model with retry logic
+download_model() {
+    local model="$1"
+    local cache_dir="$2"
+    local retry=0
+    
+    info "Prefetching model: $model"
+    
+    # Create cache directory
+    mkdir -p "$cache_dir" || {
+        error "Failed to create cache directory: $cache_dir"
+        return 1
+    }
+    
+    # Normalize model path for storage
+    local safe_name="${model//\//_}"
+    local model_path="$cache_dir/$safe_name"
+    
+    # Check if already cached
+    if [[ -d "$model_path" ]]; then
+        info "✓ Model already cached: $model"
+        return 0
+    fi
+    
+    # Try to download using huggingface_hub if available, otherwise skip
+    while [[ $retry -lt $MAX_RETRIES ]]; do
+        if command -v huggingface-cli &> /dev/null; then
+            # Try to download with huggingface-cli
+            if timeout "$TIMEOUT" huggingface-cli download "$model" --cache-dir "$cache_dir" \
+                    --quiet --resume-download 2>&1 | grep -v "^Downloading\|^100%"; then
+                info "✓ Model downloaded: $model"
+                return 0
+            fi
+        elif command -v python3 &> /dev/null; then
+            # Fallback: use python3 to check model availability
+            if python3 -c "from huggingface_hub import model_info; model_info('$model')" 2>/dev/null; then
+                info "✓ Model found on Hugging Face: $model (requires huggingface-cli to download)"
+                return 0
+            fi
+        fi
+        
+        local exit_code=$?
+        
+        if [[ $exit_code -eq 0 ]]; then
+            info "✓ Model prefetched: $model"
+            return 0
+        fi
+        
+        # Check for specific error conditions
+        case $exit_code in
+            124)
+                warn "Download timeout for model: $model, retrying..."
+                ;;
+            404)
+                warn "Model not found (404): $model - this model may not exist on Hugging Face"
+                return 0  # Don't fail, just warn
+                ;;
+            7|28)
+                warn "Network error downloading model: $model, retrying..."
+                ;;
+            *)
+                warn "Failed to prefetch model: $model (exit code: $exit_code), retrying..."
+                ;;
+        esac
+        
+        ((retry++))
+        if [[ $retry -lt $MAX_RETRIES ]]; then
+            info "Retry $retry/$MAX_RETRIES in ${RETRY_DELAY}s..."
+            sleep "$RETRY_DELAY"
+        fi
+    done
+    
+    warn "Failed to prefetch model: $model after $MAX_RETRIES attempts (continuing anyway)"
+    return 0  # Return success to allow the script to continue
+}
+
+main() {
+    local models=()
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -d) CACHE_DIR="$2"; shift ;;
+            -t) TIMEOUT="$2"; shift ;;
+            -h) usage ;;
+            -*) error "Unknown option: $1"; usage ;;
+            *) models+=("$1") ;;
+        esac
+        shift
+    done
+    
+    if [[ ${#models[@]} -eq 0 ]]; then
+        error "No models specified"
+        usage
+    fi
+    
+    log "Starting model prefetch with cache dir: $CACHE_DIR"
+    
+    local failed=0
+    for model in "${models[@]}"; do
+        if ! download_model "$model" "$CACHE_DIR"; then
+            ((failed++))
+        fi
+    done
+    
+    log "Prefetch complete: ${#models[@]} models, $failed failed"
+    
+    # Always return success to avoid blocking the startup process
+    return 0
+}
+
+main "$@"
