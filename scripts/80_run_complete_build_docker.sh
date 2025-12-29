@@ -145,8 +145,10 @@ sed -i '/TritonNvidiaGPUTransforms/d' src/extras/triton-rocm/lib/Conversion/Trit
 sed -i '/NVGPUIR/d' src/extras/triton-rocm/lib/Conversion/TritonGPUToLLVM/CMakeLists.txt
 # 6. Prune NVIDIA backend from source to avoid discovery issues
 rm -rf src/extras/triton-rocm/python/triton/backends/nvidia
-# 7. Fix Verification: must run from outside source tree
-sed -i 's/python -c/cd \/tmp \&\& python -c/g' scripts/22_build_triton_rocm.sh
+# 7. Fix Verification: must run from outside source tree (Idempotent patch)
+if ! grep -q "cd /tmp && python" scripts/22_build_triton_rocm.sh; then
+    sed -i 's/python -c/cd \/tmp \&\& python -c/g' scripts/22_build_triton_rocm.sh
+fi
 
 # Step C: Execute the Build Pipeline
 # Injected Env Vars:
