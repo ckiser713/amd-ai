@@ -58,8 +58,9 @@ else
     export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
     export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
     
-    # Use pip wheel (parallelism via CMAKE_BUILD_PARALLEL_LEVEL)
-    pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" --no-build-isolation -v
+    # Use setup.py with explicit parallel flag (same as PyTorch build)
+    python setup.py bdist_wheel -- "-j$MAX_JOBS"
+    cp dist/torchvision-0.20.1*.whl "$ARTIFACTS_DIR/"
     pip install "$ARTIFACTS_DIR"/torchvision-0.20.1*.whl --force-reinstall --no-deps
 fi
 
@@ -83,8 +84,9 @@ else
     export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
     export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
     
-    # Use pip wheel (parallelism via CMAKE_BUILD_PARALLEL_LEVEL)
-    pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" --no-build-isolation -v
+    # Use setup.py with explicit parallel flag (same as PyTorch build)
+    python setup.py bdist_wheel -- "-j$MAX_JOBS"
+    cp dist/torchaudio-2.5.1*.whl "$ARTIFACTS_DIR/"
     pip install "$ARTIFACTS_DIR"/torchaudio-2.5.1*.whl --force-reinstall --no-deps
 fi
 
