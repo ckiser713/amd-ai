@@ -1,0 +1,36 @@
+---
+description: "Rules for silent script execution and exclusive error log monitoring"
+globs: ["**/*.sh", "scripts/*.sh", "logs/error.log"]
+alwaysApply: true
+---
+
+# Execution & Debugging Protocol
+
+## 1. Silent Script Execution
+- **Constraint:** When executing the "silent script" (e.g., `./scripts/silent_build_runner.sh`), you MUST suppress all standard output from the terminal.
+- **Command Policy:** Use `Turbo` mode for this specific script to avoid approval prompts, provided the command is read-only or part of the defined "Allow list".
+
+## 2. Error Log Isolation
+- **Monitoring:** You are STRICTLY PROHIBITED from reading the primary build log or standard terminal output for debugging.
+- **Single Source of Truth:** You must ONLY read `error.log` to identify failures. All decision-making evidence must be sourced from this file.
+- **Narrative Requirement:** For every failure, build a narrative: "Request X hit endpoint Y, failed because Z" based EXCLUSIVELY on the error stack and traces in `error.log`.
+
+## 3. Feedback Loop & Decision Threshold
+- **Decision Logic:** If `error.log` does not contain sufficient details to propose a fix, you must STOP execution.
+- **User Escalation:** Do not guess. You must state exactly:
+    1. What specific information is missing from `error.log`.
+    2. Which other file or context (e.g., a specific trace or environment variable) you require to proceed.
+- **Artifact Generation:** Propose your findings as a "Research Loop" artifact before implementing any fix.
+
+## 4. Turbo Mode Allow List
+Scripts that may be auto-executed without user approval:
+- `./scripts/silent_build_runner.sh` (read-only execution + error logging)
+- `cat error.log` (read-only)
+- `cat change.log` (read-only)
+- `grep` commands on log files (read-only)
+
+## 5. Prohibited Actions
+- ❌ Reading `build_logs/*.log` directly for debugging
+- ❌ Proposing fixes without first analyzing `error.log`
+- ❌ Guessing at root causes without trace evidence
+- ❌ Running build commands outside the silent runner framework
