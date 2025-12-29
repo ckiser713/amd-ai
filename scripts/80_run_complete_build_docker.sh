@@ -12,10 +12,18 @@ while [[ $# -gt 0 ]]; do
             SKIP_PREFETCH=true
             shift
             ;;
+        --kill)
+            echo "🛑 Killing all running Docker containers..."
+            docker ps -q | xargs -r docker kill 2>/dev/null || true
+            docker ps -a -q | xargs -r docker rm 2>/dev/null || true
+            echo "✅ All containers cleaned."
+            exit 0
+            ;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: $0 [--skip]"
+            echo "Usage: $0 [--skip] [--kill]"
             echo "  --skip: Skip the dependency prefetch stage"
+            echo "  --kill: Kill and remove all Docker containers then exit"
             exit 1
             ;;
     esac
