@@ -2,17 +2,29 @@
 # ============================================
 # OpenCV 4.10.0 with ROCm/HIP Support
 # Benefit: GPU-accelerated computer vision
+# Optimized for AMD Strix Halo 395+MAX 128GB
 # ============================================
 set -e
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Load parallel environment FIRST for optimal resource usage
+source "$ROOT_DIR/scripts/parallel_env.sh"
+apply_parallel_env
+
 source "$ROOT_DIR/scripts/10_env_rocm_gfx1151.sh"
+source "$ROOT_DIR/scripts/11_env_cpu_optimized.sh"
 
 OPENCV_VERSION="4.10.0"
 SRC_OPENCV="$ROOT_DIR/src/extras/opencv"
 SRC_CONTRIB="$ROOT_DIR/src/extras/opencv_contrib"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"
 mkdir -p "$ARTIFACTS_DIR"
+
+if ls "$ARTIFACTS_DIR"/cv2*.so 1> /dev/null 2>&1 || ls "$ARTIFACTS_DIR"/opencv*.whl 1> /dev/null 2>&1; then
+    echo "✅ OpenCV already exists in artifacts/, skipping build."
+    exit 0
+fi
 
 if [[ ! -d "$SRC_OPENCV" ]]; then
     echo "Source not found in $SRC_OPENCV. Run scripts/05_git_parallel_prefetch.sh first."
@@ -26,6 +38,7 @@ fi
 echo "============================================"
 echo "Building OpenCV $OPENCV_VERSION for ROCm"
 echo "============================================"
+parallel_env_summary
 
 cd "$SRC_OPENCV"
 rm -rf build
@@ -34,8 +47,9 @@ mkdir -p build && cd build
 # Install build dependencies
 pip install -q numpy
 
-# CMake configuration
+# CMake configuration with Ninja for faster builds
 cmake .. \
+    -GNinja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/usr/local \
     -DOPENCV_EXTRA_MODULES_PATH="$SRC_CONTRIB/modules" \
@@ -59,11 +73,12 @@ cmake .. \
     -DBUILD_TESTS=OFF \
     -DBUILD_PERF_TESTS=OFF \
     -DBUILD_EXAMPLES=OFF \
+    -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
     -DCMAKE_C_FLAGS="${CFLAGS}" \
     -DCMAKE_CXX_FLAGS="${CXXFLAGS}"
 
-# Build
-cmake --build . --parallel $(nproc)
+# Build with memory-aware parallelism
+cmake --build . --parallel "$MAX_JOBS"
 
 # Copy Python bindings
 OPENCV_PYTHON_SO=$(find . -name "cv2*.so" | head -1)

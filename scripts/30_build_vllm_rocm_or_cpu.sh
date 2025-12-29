@@ -10,6 +10,11 @@ ARTIFACTS_DIR="${ARTIFACTS_DIR:-"$ROOT_DIR/artifacts"}"
 
 mkdir -p "$ARTIFACTS_DIR"
 
+if ls "$ARTIFACTS_DIR"/vllm-*.whl 1> /dev/null 2>&1; then
+    echo "✅ vLLM already exists in artifacts/, skipping build."
+    exit 0
+fi
+
 source "$SCRIPT_DIR/parallel_env.sh"
 apply_parallel_env
 

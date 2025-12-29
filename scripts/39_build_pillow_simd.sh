@@ -2,16 +2,27 @@
 # ============================================
 # Pillow-SIMD 10.4.0 with AVX-512 Support
 # Benefit: 4-6x faster image operations
+# Optimized for AMD Strix Halo 395+MAX 128GB
 # ============================================
 set -e
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-source "$ROOT_DIR/scripts/10_env_rocm_gfx1151.sh"
+
+# Load parallel environment FIRST for optimal resource usage
+source "$ROOT_DIR/scripts/parallel_env.sh"
+apply_parallel_env
+
+source "$ROOT_DIR/scripts/11_env_cpu_optimized.sh"
 
 PILLOW_VERSION="10.4.0"
 SRC_DIR="$ROOT_DIR/src/extras/pillow-simd"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"
 mkdir -p "$ARTIFACTS_DIR"
+
+if ls "$ARTIFACTS_DIR"/Pillow_SIMD-*.whl 1> /dev/null 2>&1 || ls "$ARTIFACTS_DIR"/Pillow-*.whl 1> /dev/null 2>&1; then
+    echo "✅ Pillow-SIMD already exists in artifacts/, skipping build."
+    exit 0
+fi
 
 if [[ ! -d "$SRC_DIR" ]]; then
     echo "Source not found in $SRC_DIR. Run scripts/05_git_parallel_prefetch.sh first."
@@ -21,6 +32,7 @@ fi
 echo "============================================"
 echo "Building Pillow-SIMD $PILLOW_VERSION (AVX-512)"
 echo "============================================"
+parallel_env_summary
 
 cd "$SRC_DIR"
 rm -rf build dist
@@ -28,12 +40,13 @@ rm -rf build dist
 # Install build dependencies
 pip install -q setuptools wheel
 
-# Set SIMD flags for Zen 5 (AVX-512)
-export CFLAGS="-O3 -march=znver5 -mtune=znver5 -mavx512f -mavx512bw -mavx512vl -ffast-math"
-export CC="gcc"
+# Override CFLAGS with Pillow-SIMD specific optimizations for Zen 5
+# Include -ffast-math for SIMD image processing (safe for image ops)
+export CFLAGS="-O3 -march=znver5 -mtune=znver5 -mavx512f -mavx512bw -mavx512vl -mavx512dq -mavx512vbmi -ffast-math -flto=auto"
+export CC="${CC:-gcc}"
 
-# Build wheel
-pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR"
+# Build wheel with parallel compilation
+pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" -v
 
 # Remove standard Pillow and install SIMD version
 pip uninstall -y Pillow pillow-simd 2>/dev/null || true

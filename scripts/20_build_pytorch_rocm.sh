@@ -1,19 +1,3 @@
-    # Save the wheel to repo-relative cache locations
-    WHEELS_OUT_DIR="$ROOT_DIR/wheels"
-    mkdir -p "$WHEELS_OUT_DIR"
-    cp "$WHEEL_FILE" "$WHEELS_OUT_DIR/"
-    echo "Wheel saved to: $WHEELS_OUT_DIR/$(basename \"$WHEEL_FILE\")"
-    
-    ROCOMP_OUT_DIR="$ROOT_DIR/RoCompNew/pytorch"
-    mkdir -p "$ROCOMP_OUT_DIR"
-    cp "$WHEEL_FILE" "$ROCOMP_OUT_DIR/"
-    echo "Wheel saved to: $ROCOMP_OUT_DIR/$(basename \"$WHEEL_FILE\")"
-    
-    # Also copy wheel to top-level artifacts/ for easy discovery
-    ARTIFACTS_DIR="$ROOT_DIR/artifacts"
-    mkdir -p "$ARTIFACTS_DIR"
-    cp "$WHEEL_FILE" "$ARTIFACTS_DIR/"
-    echo "Wheel copied to: $ARTIFACTS_DIR/$(basename \"$WHEEL_FILE\")"
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -26,6 +10,13 @@ source scripts/11_env_cpu_optimized.sh
 # Resolve repo root before changing directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+ARTIFACTS_DIR="$ROOT_DIR/artifacts"
+
+# Idempotency check
+if ls "$ARTIFACTS_DIR"/torch-2.9.1*.whl 1> /dev/null 2>&1; then
+    echo "✅ PyTorch already exists in artifacts/, skipping build."
+    exit 0
+fi
 
 # Check ROCm installation
 if [[ ! -d "$ROCM_PATH" ]]; then

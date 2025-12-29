@@ -2,16 +2,27 @@
 # ============================================
 # DeepSpeed 0.16.2 with ROCm/HIP Support
 # Benefit: Distributed training, ZeRO optimization
+# Optimized for AMD Strix Halo 395+MAX 128GB
 # ============================================
 set -e
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Load parallel environment FIRST for optimal resource usage
+source "$ROOT_DIR/scripts/parallel_env.sh"
+apply_parallel_env
+
 source "$ROOT_DIR/scripts/10_env_rocm_gfx1151.sh"
 source "$ROOT_DIR/scripts/11_env_cpu_optimized.sh"
 
 SRC_DIR="$ROOT_DIR/src/extras/deepspeed"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"
 mkdir -p "$ARTIFACTS_DIR"
+
+if ls "$ARTIFACTS_DIR"/deepspeed-*.whl 1> /dev/null 2>&1; then
+    echo "✅ DeepSpeed already exists in artifacts/, skipping build."
+    exit 0
+fi
 
 if [[ ! -d "$SRC_DIR" ]]; then
     echo "Source not found in $SRC_DIR. Run scripts/05_git_parallel_prefetch.sh first."
@@ -21,6 +32,7 @@ fi
 echo "============================================"
 echo "Building DeepSpeed 0.16.2 for ROCm"
 echo "============================================"
+parallel_env_summary
 
 # Verify PyTorch ROCm is installed
 python -c "import torch; assert torch.cuda.is_available()" || {
@@ -50,6 +62,9 @@ export ROCM_HOME="${ROCM_PATH}"
 export HIP_HOME="${ROCM_PATH}"
 export PYTORCH_ROCM_ARCH="gfx1151"
 export DS_ACCELERATOR="cuda"  # DeepSpeed uses CUDA API names
+
+# Use Ninja for CMake builds
+export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
 
 # Apply gfx1151 patch
 # Some DeepSpeed ops need architecture detection fix

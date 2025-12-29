@@ -2,16 +2,28 @@
 # ============================================
 # PyTorch-Triton-ROCm 3.1.0
 # Benefit: Optimized Triton integration for PyTorch
+# Optimized for AMD Strix Halo 395+MAX 128GB
 # ============================================
 set -e
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Load parallel environment FIRST for optimal resource usage
+source "$ROOT_DIR/scripts/parallel_env.sh"
+apply_parallel_env
+
 source "$ROOT_DIR/scripts/10_env_rocm_gfx1151.sh"
+source "$ROOT_DIR/scripts/11_env_cpu_optimized.sh"
 
 TRITON_VERSION="3.1.0"
 SRC_DIR="$ROOT_DIR/src/extras/triton-rocm"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"
 mkdir -p "$ARTIFACTS_DIR"
+
+if ls "$ARTIFACTS_DIR"/triton-*.whl 1> /dev/null 2>&1; then
+    echo "✅ Triton already exists in artifacts/, skipping build."
+    exit 0
+fi
 
 if [[ ! -d "$SRC_DIR" ]]; then
     echo "Source not found in $SRC_DIR. Run scripts/05_git_parallel_prefetch.sh first."
@@ -21,6 +33,7 @@ fi
 echo "============================================"
 echo "Building PyTorch-Triton-ROCm $TRITON_VERSION"
 echo "============================================"
+parallel_env_summary
 
 cd "$SRC_DIR"
 
@@ -39,6 +52,12 @@ export TRITON_CODEGEN_BACKENDS="amd"
 # Additional ROCm configuration
 export TRITON_USE_ROCM=ON
 export ROCM_PATH="${ROCM_PATH}"
+
+# Triton parallelism - uses MAX_JOBS from parallel_env.sh
+export TRITON_PARALLEL_LINK_JOBS="${TRITON_PARALLEL_LINK_JOBS:-$MAX_JOBS}"
+
+# Use Ninja for CMake builds
+export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
 
 # Install build dependencies
 pip install -q cmake ninja pybind11
@@ -65,7 +84,7 @@ pip install --force-reinstall "$ARTIFACTS_DIR"/triton-*.whl
 # Verify
 echo ""
 echo "=== Verification ==="
-python -c "
+cd /tmp && cd /tmp && cd /tmp && cd /tmp && python -c "
 import triton
 import triton.language as tl
 print(f'Triton version: {triton.__version__}')

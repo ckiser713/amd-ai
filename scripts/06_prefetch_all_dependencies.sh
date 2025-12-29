@@ -21,7 +21,7 @@ mkdir -p "$WHEELS_CACHE"
 # and we target cp311 for the build environment
 PACKAGES=(
     "pip" "setuptools" "wheel" "ninja" "cmake" "packaging" "pybind11" "swig"
-    "transformers>=4.56.0" "triton" "accelerate" "setuptools-scm>=8" 
+    "transformers>=4.56.0" "accelerate" "setuptools-scm>=8" 
     "sentencepiece" "protobuf" "fastapi[standard]>=0.115.0" "aiohttp" "openai>=1.99.1" 
     "pydantic>=2.12.0" "tiktoken>=0.6.0" "lm-format-enforcer==0.11.3" 
     "diskcache==5.6.3" "compressed-tensors==0.12.2" "depyf==0.20.0" "gguf>=0.17.0" 
@@ -42,9 +42,11 @@ PACKAGES=(
 # Download wheels
 # We use --platform manylinux2014_x86_64 --python-version 311 
 # to ensure we get wheels compatible with our build container
+# We use --no-deps to prevent accidental pulls of standard torch/triton (CUDA)
 python3.11 -m pip download \
     --dest "$WHEELS_CACHE" \
     --only-binary=:all: \
+    --no-deps \
     --platform manylinux2014_x86_64 \
     --python-version 311 \
     "${PACKAGES[@]}"

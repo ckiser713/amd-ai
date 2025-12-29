@@ -33,6 +33,7 @@ RUN apt-get update && apt-get install -y \
     ninja-build \
     build-essential \
     wget \
+    libopenblas-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set Python 3.11 as default
@@ -54,6 +55,24 @@ echo "=== AMD AI Builder: Starting Containerized Build Pipeline ==="
 # Step B: Prefetch All Dependencies on Host
 echo "Running prefetch stage..."
 bash scripts/06_prefetch_all_dependencies.sh
+
+# Step B.5: Apply Patches (Ensure they survive prefetch)
+echo "Applying Triton ROCm patches..."
+# 1. Disable -Werror for literal operators
+sed -i 's/-Werror -Wno-covered-switch-default/-Werror -Wno-covered-switch-default -Wno-error=deprecated-literal-operator/g' src/extras/triton-rocm/CMakeLists.txt
+# 2. Disable Unit Tests
+sed -i 's/option(TRITON_BUILD_UT "Build C++ Triton Unit Tests" ON)/option(TRITON_BUILD_UT "Build C++ Triton Unit Tests" OFF)/g' src/extras/triton-rocm/CMakeLists.txt
+# 3. Disable Lit Test Support Libs
+sed -i 's/add_subdirectory(test)/# add_subdirectory(test)/g' src/extras/triton-rocm/CMakeLists.txt
+# 4. Disable Bin Tools (LSP, Opt)
+sed -i 's/add_subdirectory(bin)/# add_subdirectory(bin)/g' src/extras/triton-rocm/CMakeLists.txt
+# 5. Remove NVIDIA IR from common conversion libs (Fix ROCm link error)
+sed -i '/TritonNvidiaGPUTransforms/d' src/extras/triton-rocm/lib/Conversion/TritonGPUToLLVM/CMakeLists.txt
+sed -i '/NVGPUIR/d' src/extras/triton-rocm/lib/Conversion/TritonGPUToLLVM/CMakeLists.txt
+# 6. Prune NVIDIA backend from source to avoid discovery issues
+rm -rf src/extras/triton-rocm/python/triton/backends/nvidia
+# 7. Fix Verification: must run from outside source tree
+sed -i 's/python -c/cd \/tmp \&\& python -c/g' scripts/22_build_triton_rocm.sh
 
 # Step C: Execute the Build Pipeline
 # Note: Using a single bash -c command string as requested.

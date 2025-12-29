@@ -11,6 +11,11 @@ mkdir -p "$ARTIFACTS_DIR"
 source scripts/10_env_rocm_gfx1151.sh
 source scripts/11_env_cpu_optimized.sh
 
+if [[ -f "$ARTIFACTS_DIR/llama_cpp_rocm.tar.gz" ]]; then
+    echo "✅ llama.cpp ROCm already exists in artifacts/, skipping build."
+    exit 0
+fi
+
 # Check ROCm
 if [[ ! -d "$ROCM_PATH" ]]; then
     echo "❌ ROCm not found at $ROCM_PATH"

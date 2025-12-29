@@ -10,6 +10,11 @@ mkdir -p "$ARTIFACTS_DIR"
 
 source scripts/11_env_cpu_optimized.sh
 
+if [[ -f "$ARTIFACTS_DIR/llama_cpp_cpu.tar.gz" ]]; then
+    echo "✅ llama.cpp CPU already exists in artifacts/, skipping build."
+    exit 0
+fi
+
 # Configuration
 LLAMA_CPP_DIR="${LLAMA_CPP_DIR:-src/llama.cpp}"
 # Ensure absolute path

@@ -17,15 +17,18 @@ fi
 echo ">>> Skipping git prefetch (already completed on host)..."
 
 # 3. Compile Scripts In Order
-# Skip PyTorch if artifact already exists
-if [[ -f "artifacts/torch-2.9.1-cp311-cp311-linux_x86_64.whl" ]]; then
-    echo "PyTorch wheel already exists in artifacts/, skipping build..."
-    pip install --force-reinstall artifacts/torch-2.9.1-cp311-cp311-linux_x86_64.whl
-else
-    ./scripts/20_build_pytorch_rocm.sh
+./scripts/20_build_pytorch_rocm.sh
+# Ensure PyTorch is available for downstream builds even if build was skipped
+if ls artifacts/torch-*.whl 1> /dev/null 2>&1; then
+    pip install artifacts/torch-*.whl --no-deps --force-reinstall
 fi
 
 ./scripts/22_build_triton_rocm.sh
+# Ensure Triton is available for downstream builds even if build was skipped
+if ls artifacts/triton-*.whl 1> /dev/null 2>&1; then
+    pip install artifacts/triton-*.whl --no-deps --force-reinstall
+fi
+
 ./scripts/23_build_torchvision_audio.sh
 ./scripts/24_build_numpy_rocm.sh
 ./scripts/31_build_flash_attn.sh

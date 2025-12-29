@@ -2,16 +2,28 @@
 # ============================================
 # FAISS 1.9.0 with ROCm GPU Support
 # Benefit: GPU-accelerated vector similarity search
+# Optimized for AMD Strix Halo 395+MAX 128GB
 # ============================================
 set -e
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Load parallel environment FIRST for optimal resource usage
+source "$ROOT_DIR/scripts/parallel_env.sh"
+apply_parallel_env
+
 source "$ROOT_DIR/scripts/10_env_rocm_gfx1151.sh"
+source "$ROOT_DIR/scripts/11_env_cpu_optimized.sh"
 
 FAISS_VERSION="1.9.0"
 SRC_DIR="$ROOT_DIR/src/extras/faiss"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"
 mkdir -p "$ARTIFACTS_DIR"
+
+if ls "$ARTIFACTS_DIR"/faiss*.whl 1> /dev/null 2>&1; then
+    echo "✅ FAISS already exists in artifacts/, skipping build."
+    exit 0
+fi
 
 if [[ ! -d "$SRC_DIR" ]]; then
     echo "Source not found in $SRC_DIR. Run scripts/05_git_parallel_prefetch.sh first."
@@ -21,6 +33,7 @@ fi
 echo "============================================"
 echo "Building FAISS $FAISS_VERSION for ROCm"
 echo "============================================"
+parallel_env_summary
 
 cd "$SRC_DIR"
 rm -rf build
@@ -31,8 +44,9 @@ pip install -q numpy swig
 # Create build directory
 mkdir -p build && cd build
 
-# CMake configuration for ROCm
+# CMake configuration for ROCm with Ninja for faster builds
 cmake .. \
+    -GNinja \
     -DCMAKE_BUILD_TYPE=Release \
     -DFAISS_ENABLE_GPU=ON \
     -DFAISS_ENABLE_ROCM=ON \
@@ -42,11 +56,12 @@ cmake .. \
     -DPython_EXECUTABLE=$(which python3.11) \
     -DBUILD_TESTING=OFF \
     -DFAISS_OPT_LEVEL=avx512 \
+    -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
     -DCMAKE_C_FLAGS="${CFLAGS}" \
     -DCMAKE_CXX_FLAGS="${CXXFLAGS}"
 
-# Build
-cmake --build . --parallel $(nproc)
+# Build with memory-aware parallelism
+cmake --build . --parallel "$MAX_JOBS"
 
 # Build Python wheel
 cd ../python
