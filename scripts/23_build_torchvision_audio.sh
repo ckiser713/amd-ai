@@ -3,6 +3,15 @@
 # Optimized for AMD Strix Halo 395+MAX 128GB
 set -e
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Load lock manager and check lock status
+source "$SCRIPT_DIR/lock_manager.sh"
+if ! check_lock "$0"; then
+    echo "❌ Script is LOCKED. User permission required to execute/modify."
+    echo "   Run: ./scripts/lock_manager.sh --unlock scripts/23_build_torchvision_audio.sh"
+    exit 1
+fi
 
 # Load parallel environment FIRST for optimal resource usage
 source "$ROOT_DIR/scripts/parallel_env.sh"
@@ -89,3 +98,8 @@ print(f'torch: {torch.__version__}')
 print(f'torchvision: {torchvision.__version__}')
 print(f'torchaudio: {torchaudio.__version__}')
 "
+
+echo "✅ TorchVision/TorchAudio build complete"
+
+# Lock this script after successful build
+lock_script "$0" "torchvision+torchaudio"

@@ -3,6 +3,18 @@ set -euo pipefail
 
 echo "🏗️  Building PyTorch 2.9.1 with ROCm support..."
 
+# Resolve repo root before loading scripts
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Load lock manager and check lock status
+source "$SCRIPT_DIR/lock_manager.sh"
+if ! check_lock "$0"; then
+    echo "❌ Script is LOCKED. User permission required to execute/modify."
+    echo "   Run: ./scripts/lock_manager.sh --unlock scripts/20_build_pytorch_rocm.sh"
+    exit 1
+fi
+
 # Load environments
 source scripts/10_env_rocm_gfx1151.sh
 source scripts/11_env_cpu_optimized.sh
@@ -10,9 +22,7 @@ source scripts/parallel_env.sh
 apply_parallel_env
 ensure_numpy_from_artifacts
 
-# Resolve repo root before changing directories
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+# Artifacts directory
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"
 
 # Idempotency check
@@ -191,3 +201,6 @@ else
 fi
 
 echo "✅ PyTorch $PYTORCH_VERSION with ROCm built successfully"
+
+# Lock this script after successful build
+lock_script "$0" "$(basename "$WHEEL_FILE")"

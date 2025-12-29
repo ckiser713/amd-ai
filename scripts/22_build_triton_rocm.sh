@@ -7,6 +7,15 @@
 set -e
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Load lock manager and check lock status
+source "$SCRIPT_DIR/lock_manager.sh"
+if ! check_lock "$0"; then
+    echo "❌ Script is LOCKED. User permission required to execute/modify."
+    echo "   Run: ./scripts/lock_manager.sh --unlock scripts/22_build_triton_rocm.sh"
+    exit 1
+fi
 
 # Load parallel environment FIRST for optimal resource usage
 source "$ROOT_DIR/scripts/parallel_env.sh"
@@ -101,3 +110,7 @@ print(f'Triton version: {triton.__version__}')
 echo ""
 echo "=== PyTorch-Triton-ROCm build complete ==="
 echo "Wheel: $ARTIFACTS_DIR/triton-*.whl"
+
+# Lock this script after successful build
+WHEEL_FILE=$(ls "$ARTIFACTS_DIR"/triton-*.whl 2>/dev/null | head -1)
+lock_script "$0" "$(basename "$WHEEL_FILE")"

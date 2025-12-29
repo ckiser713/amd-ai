@@ -128,3 +128,57 @@ Output: Strictly prints "complete" on success or "failure" on error.
 Failure Protocol: On failure, it populates error.log with brief but detailed context for the next repair cycle.
 
 Looping: Agents should fix issues based on error.log and re-execute the silent runner until "complete" is returned.
+
+9. Lock Protocol (MANDATORY)
+
+The repository uses a "Lock & Track" system to prevent regressions on successful builds.
+
+A. Lock Status Check
+
+Before editing any shell script in scripts/, agents MUST check for a corresponding .lock file:
+
+```bash
+ls scripts/20_build_pytorch_rocm.sh.lock  # If exists, script is LOCKED
+```
+
+Or use the lock manager:
+
+```bash
+./scripts/lock_manager.sh --check scripts/20_build_pytorch_rocm.sh
+```
+
+B. Prohibited Actions
+
+Agents are FORBIDDEN from:
+
+1. Editing any script that has a .lock file without explicit user permission.
+
+2. Removing or modifying .lock files without user approval.
+
+3. Bypassing the lock check in build scripts.
+
+C. Unlocking Procedure
+
+If a user needs to modify a locked script, they must explicitly request:
+> "Unlock script X"
+
+The agent then runs:
+
+```bash
+./scripts/lock_manager.sh --unlock scripts/X.sh
+```
+
+D. Auto-Lock Behavior
+
+All build scripts automatically lock themselves upon successful completion. This preserves the "Gold Standard" version that produced valid artifacts.
+
+E. Dependency Matrix
+
+The file build_config/dependency_matrix.json tracks:
+
+1. Lock status of all build scripts.
+2. Last successful build date.
+3. Artifact produced by each script.
+4. Upstream/downstream dependencies.
+
+Agents should review this matrix before proposing changes that affect dependencies.

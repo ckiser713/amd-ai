@@ -12,6 +12,20 @@ mkdir -p "$LOG_DIR"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 FULL_LOG="$LOG_DIR/build_${TIMESTAMP}.log"
 ERROR_LOG="error.log"
+CHANGE_LOG="change.log"
+
+# =========================================================================
+# PRE-FLIGHT CHECK: Verify change.log status before starting
+# =========================================================================
+if [[ -f "$CHANGE_LOG" ]]; then
+    # Extract last status entry (handles both "Status:" and "**Status**:" formats)
+    LAST_STATUS=$(grep -E "^\*\*Status\*\*:|^Status:" "$CHANGE_LOG" | tail -1 | sed 's/.*: *//')
+    if [[ "$LAST_STATUS" == *"IN_PROGRESS"* ]]; then
+        echo "⚠️  WARNING: An agent is currently working (Status: IN_PROGRESS)"
+        echo "   Check change.log before proceeding to avoid conflicts."
+        echo "   File: $(readlink -f "$CHANGE_LOG")"
+    fi
+fi
 
 # Execute full build pipeline silently
 ./scripts/80_run_complete_build_docker.sh > "$FULL_LOG" 2>&1
@@ -34,6 +48,22 @@ else
     } > "$ERROR_LOG"
     
     echo "Investigate: $(readlink -f $ERROR_LOG)"
+    
+    # =========================================================================
+    # POST-FAILURE HOOK: Append agent-required template to change.log
+    # =========================================================================
+    {
+        echo ""
+        echo "## [Agent-Required] | $(date '+%Y-%m-%d %H:%M')"
+        echo "**Status**: BROKEN"
+        echo "**Error Reported**: Build failed with exit code $EXIT_CODE"
+        echo "**Files Implicated**: See $ERROR_LOG"
+        echo "**Deep Dive Findings**: (pending agent analysis)"
+        echo "**Applied Fix**: (pending)"
+        echo "**Recommendation**: Run \`cat error.log\` and investigate"
+        echo "**End Time**: (pending)"
+    } >> "$CHANGE_LOG"
+    echo "📋 Appended repair request to change.log"
     
     # =========================================================================
     # ANTIGRAVITY REPAIR INSTRUCTIONS FOR AI AGENT

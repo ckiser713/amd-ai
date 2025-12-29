@@ -1,0 +1,168 @@
+{
+  "scripts/24_build_numpy_rocm.sh": {
+    "status": "UNLOCKED",
+    "last_success": "2025-12-29",
+    "artifact": "numpy-2.2.1-cp311-cp311-linux_x86_64.whl",
+    "upstream_deps": [],
+    "downstream_dependents": [
+      "scripts/20_build_pytorch_rocm.sh"
+    ]
+  },
+  "scripts/20_build_pytorch_rocm.sh": {
+    "status": "UNLOCKED",
+    "last_success": "2025-12-29",
+    "artifact": "torch-2.9.1-cp311-cp311-linux_x86_64.whl",
+    "upstream_deps": [
+      "scripts/24_build_numpy_rocm.sh"
+    ],
+    "downstream_dependents": [
+      "scripts/22_build_triton_rocm.sh",
+      "scripts/23_build_torchvision_audio.sh",
+      "scripts/30_build_vllm_rocm_or_cpu.sh",
+      "scripts/31_build_flash_attn.sh",
+      "scripts/32_build_xformers.sh",
+      "scripts/33_build_bitsandbytes.sh",
+      "scripts/34_build_deepspeed_rocm.sh",
+      "scripts/35_build_onnxruntime_rocm.sh",
+      "scripts/36_build_cupy_rocm.sh",
+      "scripts/37_build_faiss_rocm.sh"
+    ]
+  },
+  "scripts/21_build_pytorch_cpu.sh": {
+    "status": "UNLOCKED",
+    "last_success": null,
+    "artifact": null,
+    "upstream_deps": [
+      "scripts/24_build_numpy_rocm.sh"
+    ],
+    "downstream_dependents": []
+  },
+  "scripts/22_build_triton_rocm.sh": {
+    "status": "UNLOCKED",
+    "last_success": "2025-12-29",
+    "artifact": "triton-3.1.0-cp311-cp311-linux_x86_64.whl",
+    "upstream_deps": [
+      "scripts/20_build_pytorch_rocm.sh"
+    ],
+    "downstream_dependents": [
+      "scripts/30_build_vllm_rocm_or_cpu.sh"
+    ]
+  },
+  "scripts/23_build_torchvision_audio.sh": {
+    "status": "UNLOCKED",
+    "last_success": "2025-12-29",
+    "artifact": "torchvision-0.20.1a0+3ac97aa-cp311-cp311-linux_x86_64.whl",
+    "upstream_deps": [
+      "scripts/20_build_pytorch_rocm.sh"
+    ],
+    "downstream_dependents": []
+  },
+  "scripts/30_build_vllm_rocm_or_cpu.sh": {
+    "status": "UNLOCKED",
+    "last_success": null,
+    "artifact": null,
+    "upstream_deps": [
+      "scripts/20_build_pytorch_rocm.sh",
+      "scripts/22_build_triton_rocm.sh"
+    ],
+    "downstream_dependents": []
+  },
+  "scripts/31_build_flash_attn.sh": {
+    "status": "LOCKED",
+    "last_success": "2025-12-29",
+    "artifact": "flash_attn-2.7.4.post1-py3-none-any.whl",
+    "upstream_deps": [
+      "scripts/20_build_pytorch_rocm.sh"
+    ],
+    "downstream_dependents": []
+  },
+  "scripts/32_build_xformers.sh": {
+    "status": "UNLOCKED",
+    "last_success": null,
+    "artifact": null,
+    "upstream_deps": [
+      "scripts/20_build_pytorch_rocm.sh"
+    ],
+    "downstream_dependents": []
+  },
+  "scripts/33_build_bitsandbytes.sh": {
+    "status": "UNLOCKED",
+    "last_success": null,
+    "artifact": null,
+    "upstream_deps": [
+      "scripts/20_build_pytorch_rocm.sh"
+    ],
+    "downstream_dependents": []
+  },
+  "scripts/34_build_deepspeed_rocm.sh": {
+    "status": "UNLOCKED",
+    "last_success": null,
+    "artifact": null,
+    "upstream_deps": [
+      "scripts/20_build_pytorch_rocm.sh"
+    ],
+    "downstream_dependents": []
+  },
+  "scripts/35_build_onnxruntime_rocm.sh": {
+    "status": "UNLOCKED",
+    "last_success": null,
+    "artifact": null,
+    "upstream_deps": [
+      "scripts/20_build_pytorch_rocm.sh"
+    ],
+    "downstream_dependents": []
+  },
+  "scripts/36_build_cupy_rocm.sh": {
+    "status": "UNLOCKED",
+    "last_success": null,
+    "artifact": null,
+    "upstream_deps": [
+      "scripts/20_build_pytorch_rocm.sh"
+    ],
+    "downstream_dependents": []
+  },
+  "scripts/37_build_faiss_rocm.sh": {
+    "status": "UNLOCKED",
+    "last_success": null,
+    "artifact": null,
+    "upstream_deps": [
+      "scripts/20_build_pytorch_rocm.sh"
+    ],
+    "downstream_dependents": []
+  },
+  "scripts/38_build_opencv_rocm.sh": {
+    "status": "UNLOCKED",
+    "last_success": null,
+    "artifact": null,
+    "upstream_deps": [],
+    "downstream_dependents": []
+  },
+  "scripts/39_build_pillow_simd.sh": {
+    "status": "UNLOCKED",
+    "last_success": "2025-12-29",
+    "artifact": "pillow-10.4.0-cp311-cp311-linux_x86_64.whl",
+    "upstream_deps": [],
+    "downstream_dependents": []
+  },
+  "scripts/40_build_llama_cpp_cpu.sh": {
+    "status": "UNLOCKED",
+    "last_success": null,
+    "artifact": null,
+    "upstream_deps": [],
+    "downstream_dependents": []
+  },
+  "scripts/41_build_llama_cpp_rocm.sh": {
+    "status": "UNLOCKED",
+    "last_success": null,
+    "artifact": null,
+    "upstream_deps": [],
+    "downstream_dependents": []
+  },
+  "scripts/42_build_llama_cpp_b7551.sh": {
+    "status": "UNLOCKED",
+    "last_success": null,
+    "artifact": null,
+    "upstream_deps": [],
+    "downstream_dependents": []
+  }
+}

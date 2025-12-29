@@ -35,5 +35,4 @@ Thumbs.db
 src/extras/
 new_scripts/
 node_modules/
-.agent/
 .gemini/

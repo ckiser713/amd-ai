@@ -42,6 +42,28 @@ else
     git fetch --depth=1 origin b7551
     git checkout b7551
     git reset --hard origin/b7551
+    
+    # Apply critical SIGSEGV fix patch (prevents null pointer crashes)
+    PATCH_FILE="$ROOT_DIR/patches/llama_sigsegv_fix.patch"
+    if [[ -f "$PATCH_FILE" ]]; then
+        echo "📋 Applying SIGSEGV fix patch..."
+        if ! git apply --check "$PATCH_FILE" 2>/dev/null; then
+            echo "⚠️  Patch already applied or conflict detected, checking reverse..."
+            if git apply --check --reverse "$PATCH_FILE" 2>/dev/null; then
+                echo "✅ Patch already applied, continuing..."
+            else
+                echo "❌ FATAL: Cannot apply critical SIGSEGV fix patch!"
+                echo "   See: COMPLETE_GUIDE.md for manual fix instructions"
+                exit 1
+            fi
+        else
+            git apply "$PATCH_FILE"
+            echo "✅ SIGSEGV fix patch applied successfully"
+        fi
+    else
+        echo "⚠️  WARNING: Patch file not found at $PATCH_FILE"
+        echo "   Build may produce unstable binaries. See COMPLETE_GUIDE.md"
+    fi
 fi
 
 # Create build directory

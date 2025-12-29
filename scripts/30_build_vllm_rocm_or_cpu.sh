@@ -5,6 +5,15 @@ echo "🚀 Building vLLM for AMD ROCm..."
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Load lock manager and check lock status
+source "$SCRIPT_DIR/lock_manager.sh"
+if ! check_lock "$0"; then
+    echo "❌ Script is LOCKED. User permission required to execute/modify."
+    echo "   Run: ./scripts/lock_manager.sh --unlock scripts/30_build_vllm_rocm_or_cpu.sh"
+    exit 1
+fi
+
 WHEELS_DIR="${WHEELS_DIR:-"$ROOT_DIR/wheels"}"
 ARTIFACTS_DIR="${ARTIFACTS_DIR:-"$ROOT_DIR/artifacts"}"
 
@@ -453,7 +462,10 @@ echo "Creating artifact tarball: $ARTIFACT_TAR"
 tar -czf "$ARTIFACT_TAR" -C "$ARTIFACTS_DIR" "${ARTIFACT_FILES[@]}"
 echo "   Contents: ${ARTIFACT_FILES[*]}"
 
-# Save to RoCompNew
 mkdir -p ../../../RoCompNew/vllm
 cp -r "$VLLM_SRC_DIR" ../../../RoCompNew/vllm/
 echo "vLLM source saved to: ../../../RoCompNew/vllm/$(basename "$VLLM_SRC_DIR")"
+
+# Lock this script after successful build
+lock_script "$0" "$(basename "${VLLM_WHEEL_PATH:-vllm}")"
+
