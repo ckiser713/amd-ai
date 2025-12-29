@@ -153,6 +153,10 @@ if [[ -n "$WHEEL_FILE" ]]; then
     pip install "$WHEEL_FILE" --force-reinstall --no-deps
     
     # Save the wheel to repo-relative cache locations
+    mkdir -p "$ARTIFACTS_DIR"
+    cp "$WHEEL_FILE" "$ARTIFACTS_DIR/"
+    echo "Wheel saved to: $ARTIFACTS_DIR/$(basename "$WHEEL_FILE")"
+    
     WHEELS_OUT_DIR="$ROOT_DIR/wheels"
     mkdir -p "$WHEELS_OUT_DIR"
     cp "$WHEEL_FILE" "$WHEELS_OUT_DIR/"

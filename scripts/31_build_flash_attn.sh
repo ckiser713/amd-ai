@@ -53,11 +53,22 @@ export FLASH_ATTENTION_SKIP_CUDA_BUILD=TRUE
 export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
 export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
 
+# Strict Dependency Check: Ensure correct PyTorch is active
+if ! python -c "import torch; assert torch.__version__.startswith('2.9.1'), f'Wrong PyTorch: {torch.__version__}'"; then
+    echo "⚠️  Wrong PyTorch version detected. Forcing install from artifacts..."
+    # Try to install from artifacts
+    pip install --force-reinstall --no-deps --no-index --find-links="$ARTIFACTS_DIR" torch==2.9.1* || {
+        echo "❌ Failed to install PyTorch 2.9.1 from artifacts ($ARTIFACTS_DIR). Build it first (scripts/20_build_pytorch_rocm.sh)."
+        exit 1
+    }
+fi
+
 # Build wheel with explicit parallel compilation
-pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" --no-build-isolation -v
+# Must include artifacts dir in find-links to satisfy dependencies that might need to be resolved from there
+pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" --no-build-isolation -v --no-index --find-links="$ARTIFACTS_DIR" --find-links="$ROOT_DIR/wheels/cache"
 
 # Install
-pip install --force-reinstall "$ARTIFACTS_DIR"/flash_attn-*.whl
+pip install --force-reinstall --no-deps "$ARTIFACTS_DIR"/flash_attn-*.whl
 
 # Verify (change directory to avoid importing from source tree)
 cd "$ROOT_DIR"

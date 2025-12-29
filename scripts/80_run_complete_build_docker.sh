@@ -166,7 +166,7 @@ docker run --rm \
     -e ROCM_PATH=/opt/rocm \
     -e HOME=/tmp \
     -e PIP_NO_INDEX=1 \
-    -e PIP_FIND_LINKS=/app/wheels/cache \
+    -e PIP_FIND_LINKS="/app/artifacts /app/wheels/cache" \
     -e MAX_JOBS="$TARGET_JOBS" \
     -e PARALLEL_MODE=pin \
     -e DETECTED_GPU_ARCH="${DETECTED_GPU_ARCH:-}" \

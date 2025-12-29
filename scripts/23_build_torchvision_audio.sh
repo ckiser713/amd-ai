@@ -51,17 +51,8 @@ else
     cd "$SRC_VISION"
     rm -rf build dist
     
-    export FORCE_CUDA=1
-    export USE_ROCM=1
-    export TORCHVISION_USE_FFMPEG=1
-    export TORCHVISION_USE_VIDEO_CODEC=1
-    export PYTORCH_ROCM_ARCH="gfx1151"
-    export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
-    export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
-    export MAX_JOBS="$MAX_JOBS"
-    
-    # Build wheel (FORCE_CUDA=1 enables CUDA API compat for ROCm)
-    pip wheel . --no-deps --no-build-isolation --wheel-dir="$ARTIFACTS_DIR" -v
+    # Build wheel (ROCm build takes priority)
+    pip wheel . --no-deps --no-build-isolation --wheel-dir="$ARTIFACTS_DIR" -v --no-index --find-links="$ARTIFACTS_DIR" --find-links="$ROOT_DIR/wheels/cache"
     pip install "$ARTIFACTS_DIR"/torchvision-0.20.1*.whl --force-reinstall --no-deps
 fi
 
@@ -86,7 +77,7 @@ else
     export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
     
     # Use pip wheel for consistent build behavior and parallelization
-    pip wheel . --no-deps --no-build-isolation --wheel-dir="$ARTIFACTS_DIR" -v
+    pip wheel . --no-deps --no-build-isolation --wheel-dir="$ARTIFACTS_DIR" -v --no-index --find-links="$ARTIFACTS_DIR" --find-links="$ROOT_DIR/wheels/cache"
     pip install "$ARTIFACTS_DIR"/torchaudio-2.5.1*.whl --force-reinstall --no-deps
 fi
 

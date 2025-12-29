@@ -43,12 +43,12 @@ rm -rf build dist
 export USE_ROCM=1
 export USE_CUDA=0
 export PYTORCH_ROCM_ARCH="gfx1151"
-export FORCE_CUDA=1
+export HIP_ARCHITECTURES="gfx1151"
 export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
 export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
 
 # Build wheel with explicit parallel compilation
-pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" --no-build-isolation -v
+pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" --no-build-isolation -v --no-index --find-links="$ARTIFACTS_DIR" --find-links="$ROOT_DIR/wheels/cache"
 
 # Install
 pip install --force-reinstall "$ARTIFACTS_DIR"/xformers-*.whl

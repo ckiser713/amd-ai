@@ -41,8 +41,12 @@ ensure_numpy_from_artifacts
 ./scripts/24_build_numpy_rocm.sh
 
 # 2. Build/Install Core Infrastructure (Needs NumPy)
+# 2. Build/Install Core Infrastructure (Needs NumPy)
 install_if_exists "torch-*.whl"
 ./scripts/20_build_pytorch_rocm.sh
+
+echo ">>> Verifying PyTorch 2.9.1 artifact exists..."
+ls -lh "$ARTIFACTS_DIR"/torch-2.9.1*.whl || { echo "❌ PyTorch 2.9.1 artifact missing after build!"; exit 1; }
 
 install_if_exists "triton-*.whl"
 ./scripts/22_build_triton_rocm.sh
