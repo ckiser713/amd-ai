@@ -85,9 +85,8 @@ else
     export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
     export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
     
-    # Use setup.py with explicit parallel flag (same as PyTorch build)
-    python setup.py bdist_wheel -- "-j$MAX_JOBS"
-    cp dist/torchaudio-2.5.1*.whl "$ARTIFACTS_DIR/"
+    # Use pip wheel for consistent build behavior and parallelization
+    pip wheel . --no-deps --no-build-isolation --wheel-dir="$ARTIFACTS_DIR" -v
     pip install "$ARTIFACTS_DIR"/torchaudio-2.5.1*.whl --force-reinstall --no-deps
 fi
 
