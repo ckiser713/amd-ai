@@ -12,8 +12,8 @@ CPU_CORES=$(lscpu | grep -i "^CPU(s):" | awk '{print $2}')
 CPU_THREADS=$(lscpu | grep -i "Thread(s) per core" | awk '{print $4}')
 CPU_ARCH=""
 
-# Determine CPU microarchitecture
-if [[ "$CPU_MODEL" == *"Ryzen AI Max+"* ]] || [[ "$CPU_MODEL" == *"Zen 5"* ]]; then
+# Determine CPU microarchitecture (RYZEN AI MAX+ / Strix Halo is Zen 5)
+if [[ "${CPU_MODEL^^}" == *"RYZEN AI MAX+"* ]] || [[ "${CPU_MODEL^^}" == *"ZEN 5"* ]]; then
     CPU_ARCH="znver5"
     echo "✅ Detected Zen 5 CPU architecture (znver5)"
 elif [[ "$CPU_MODEL" == *"Zen 4"* ]]; then

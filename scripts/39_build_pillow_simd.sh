@@ -43,8 +43,8 @@ pip install -q setuptools wheel
 
 # Override CFLAGS with Pillow-SIMD specific optimizations for Zen 5
 # Override CFLAGS with Pillow-SIMD specific optimizations
-# Use detected architecture or fallback to znver4 for compatibility
-ARCH="${DETECTED_CPU_ARCH:-znver4}"
+# Use detected architecture or fallback to znver5 for Strix Halo
+ARCH="${DETECTED_CPU_ARCH:-znver5}"
 echo "Building for Architecture: $ARCH"
 
 export CFLAGS="-O3 -march=$ARCH -mtune=$ARCH -mavx512f -mavx512bw -mavx512vl -mavx512dq -mavx512vbmi -flto=auto"
