@@ -9,6 +9,12 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 source scripts/11_env_cpu_optimized.sh
 
+# Activate virtual environment (project-local, repo-relative)
+VENV_DIR="${VENV_DIR:-"$ROOT_DIR/.venv"}"
+if [[ -f "$VENV_DIR/bin/activate" ]]; then
+    source "$VENV_DIR/bin/activate"
+fi
+
 # Idempotency check: Skip if any PyTorch wheel exists
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"
 if ls "$ARTIFACTS_DIR"/torch-*.whl 1> /dev/null 2>&1; then

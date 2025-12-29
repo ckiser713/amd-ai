@@ -15,6 +15,12 @@ apply_parallel_env
 source "$ROOT_DIR/scripts/10_env_rocm_gfx1151.sh"
 source "$ROOT_DIR/scripts/11_env_cpu_optimized.sh"
 
+# Activate virtual environment (project-local, repo-relative)
+VENV_DIR="${VENV_DIR:-"$ROOT_DIR/.venv"}"
+if [[ -f "$VENV_DIR/bin/activate" ]]; then
+    source "$VENV_DIR/bin/activate"
+fi
+
 TRITON_VERSION="3.1.0"
 SRC_DIR="$ROOT_DIR/src/extras/triton-rocm"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"
@@ -85,7 +91,7 @@ pip install --force-reinstall "$ARTIFACTS_DIR"/triton-*.whl
 # Verify
 echo ""
 echo "=== Verification ==="
-cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && python -c "
+cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && python -c "
 import triton
 import triton.language as tl
 print(f'Triton version: {triton.__version__}')

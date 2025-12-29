@@ -11,6 +11,12 @@ apply_parallel_env
 source "$ROOT_DIR/scripts/10_env_rocm_gfx1151.sh"
 source "$ROOT_DIR/scripts/11_env_cpu_optimized.sh"
 
+# Activate virtual environment (project-local, repo-relative)
+VENV_DIR="${VENV_DIR:-"$ROOT_DIR/.venv"}"
+if [[ -f "$VENV_DIR/bin/activate" ]]; then
+    source "$VENV_DIR/bin/activate"
+fi
+
 SRC_DIR="$ROOT_DIR/src/extras/llama-cpp"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"
 mkdir -p "$ARTIFACTS_DIR"
@@ -60,6 +66,7 @@ sudo cp build/lib/*.so /usr/local/lib/
 sudo ldconfig
 
 # Build python wheel for bindings
+export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
 export CMAKE_ARGS="-DGGML_HIP=ON -DAMDGPU_TARGETS=gfx1151 -DGGML_HIP_UMA=ON"
 pip wheel llama-cpp-python \
     --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/rocm \

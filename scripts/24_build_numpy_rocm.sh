@@ -11,6 +11,12 @@ apply_parallel_env
 source "$ROOT_DIR/scripts/10_env_rocm_gfx1151.sh"
 source "$ROOT_DIR/scripts/11_env_cpu_optimized.sh"
 
+# Activate virtual environment (project-local, repo-relative)
+VENV_DIR="${VENV_DIR:-"$ROOT_DIR/.venv"}"
+if [[ -f "$VENV_DIR/bin/activate" ]]; then
+    source "$VENV_DIR/bin/activate"
+fi
+
 SRC_DIR="$ROOT_DIR/src/extras/numpy"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"
 mkdir -p "$ARTIFACTS_DIR"
@@ -47,7 +53,7 @@ export NPY_NUM_BUILD_JOBS="$MAX_JOBS"
 # Use meson's ninja backend
 export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
 
-# Build wheel to artifacts with parallel compilation
+# Build wheel to artifacts with explicit parallel compilation
 pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" --no-build-isolation -v
 
 # Install

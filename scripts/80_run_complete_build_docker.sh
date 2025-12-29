@@ -4,9 +4,31 @@
 
 set -e
 
+# Parse arguments
+SKIP_PREFETCH=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --skip)
+            SKIP_PREFETCH=true
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 [--skip]"
+            echo "  --skip: Skip the dependency prefetch stage"
+            exit 1
+            ;;
+    esac
+done
+
 # Repository Root Detection
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+
+# Kill any running amd-ai-builder containers
+echo "=== Cleaning up old containers ==="
+docker ps -a --filter "ancestor=amd-ai-builder:local" --format "{{.ID}}" | xargs -r docker kill 2>/dev/null || true
+docker ps -a --filter "ancestor=amd-ai-builder:local" --format "{{.ID}}" | xargs -r docker rm 2>/dev/null || true
 
 echo "=== AMD AI Builder: Initializing Docker Infrastructure ==="
 
@@ -53,8 +75,12 @@ EOF
 echo "=== AMD AI Builder: Starting Containerized Build Pipeline ==="
 
 # Step B: Prefetch All Dependencies on Host
-echo "Running prefetch stage..."
-bash scripts/06_prefetch_all_dependencies.sh
+if [ "$SKIP_PREFETCH" = false ]; then
+    echo "Running prefetch stage..."
+    bash scripts/06_prefetch_all_dependencies.sh
+else
+    echo ">>> Skipping prefetch stage (--skip flag set)..."
+fi
 
 # Step B.5: Apply Patches (Ensure they survive prefetch)
 echo "Applying Triton ROCm patches..."

@@ -45,7 +45,7 @@ pip install -q setuptools wheel
 export CFLAGS="-O3 -march=znver5 -mtune=znver5 -mavx512f -mavx512bw -mavx512vl -mavx512dq -mavx512vbmi -ffast-math -flto=auto"
 export CC="${CC:-gcc}"
 
-# Build wheel with parallel compilation
+# Build wheel with explicit parallel compilation
 pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" -v
 
 # Remove standard Pillow and install SIMD version

@@ -15,6 +15,12 @@ apply_parallel_env
 source "$ROOT_DIR/scripts/10_env_rocm_gfx1151.sh"
 source "$ROOT_DIR/scripts/11_env_cpu_optimized.sh"
 
+# Activate virtual environment (project-local, repo-relative)
+VENV_DIR="${VENV_DIR:-"$ROOT_DIR/.venv"}"
+if [[ -f "$VENV_DIR/bin/activate" ]]; then
+    source "$VENV_DIR/bin/activate"
+fi
+
 CUPY_VERSION="13.3.0"
 SRC_DIR="$ROOT_DIR/src/extras/cupy"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"
@@ -63,7 +69,7 @@ export CUPY_NUM_BUILD_JOBS="$MAX_JOBS"
 # Use ninja for CMake builds
 export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
 
-# Build wheel with parallel compilation
+# Build wheel with explicit parallel compilation
 pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" -vvv
 
 # Install

@@ -15,6 +15,12 @@ apply_parallel_env
 source "$ROOT_DIR/scripts/10_env_rocm_gfx1151.sh"
 source "$ROOT_DIR/scripts/11_env_cpu_optimized.sh"
 
+# Activate virtual environment (project-local, repo-relative)
+VENV_DIR="${VENV_DIR:-"$ROOT_DIR/.venv"}"
+if [[ -f "$VENV_DIR/bin/activate" ]]; then
+    source "$VENV_DIR/bin/activate"
+fi
+
 FAISS_VERSION="1.9.0"
 SRC_DIR="$ROOT_DIR/src/extras/faiss"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"

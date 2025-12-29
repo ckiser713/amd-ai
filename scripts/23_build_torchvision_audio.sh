@@ -11,6 +11,12 @@ apply_parallel_env
 source "$ROOT_DIR/scripts/10_env_rocm_gfx1151.sh"
 source "$ROOT_DIR/scripts/11_env_cpu_optimized.sh"
 
+# Activate virtual environment (project-local, repo-relative)
+VENV_DIR="${VENV_DIR:-"$ROOT_DIR/.venv"}"
+if [[ -f "$VENV_DIR/bin/activate" ]]; then
+    source "$VENV_DIR/bin/activate"
+fi
+
 SRC_VISION="$ROOT_DIR/src/extras/torchvision"
 SRC_AUDIO="$ROOT_DIR/src/extras/torchaudio"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"
@@ -45,13 +51,14 @@ else
     rm -rf build dist
     
     export FORCE_CUDA=0
+    export USE_ROCM=1
     export TORCHVISION_USE_FFMPEG=1
     export TORCHVISION_USE_VIDEO_CODEC=1
     export PYTORCH_ROCM_ARCH="gfx1151"
     export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
     export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
     
-    # Use pip wheel for better parallelism propagation
+    # Use pip wheel (parallelism via CMAKE_BUILD_PARALLEL_LEVEL)
     pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" --no-build-isolation -v
     pip install "$ARTIFACTS_DIR"/torchvision-0.20.1*.whl --force-reinstall --no-deps
 fi
@@ -76,7 +83,7 @@ else
     export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
     export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
     
-    # Use pip wheel for better parallelism propagation
+    # Use pip wheel (parallelism via CMAKE_BUILD_PARALLEL_LEVEL)
     pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" --no-build-isolation -v
     pip install "$ARTIFACTS_DIR"/torchaudio-2.5.1*.whl --force-reinstall --no-deps
 fi
