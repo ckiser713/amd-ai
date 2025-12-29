@@ -25,8 +25,8 @@ if [[ "$CPU_ARCH" == "znver5" ]] || [[ "$CPU_ARCH" == "znver4" ]]; then
     # bf16 is supported on Zen 4 and 5
     AVX512_FLAGS="$AVX512_FLAGS -mavx512bf16"
 
-    export CFLAGS="-march=$CPU_ARCH -mtune=$CPU_ARCH -O3 $AVX512_FLAGS -pipe -fno-plt -fexceptions -flto=auto -fuse-linker-plugin"
-    export CXXFLAGS="-march=$CPU_ARCH -mtune=$CPU_ARCH -O3 $AVX512_FLAGS -pipe -fno-plt -fexceptions -flto=auto -fuse-linker-plugin"
+    export CFLAGS="-march=$CPU_ARCH -mtune=$CPU_ARCH -O3 $AVX512_FLAGS -pipe -fno-plt -fexceptions -flto=auto"
+    export CXXFLAGS="-march=$CPU_ARCH -mtune=$CPU_ARCH -O3 $AVX512_FLAGS -pipe -fno-plt -fexceptions -flto=auto"
 else
     export CFLAGS="-march=$CPU_ARCH -O3 -pipe -fno-plt -fexceptions -flto=auto"
     export CXXFLAGS="-march=$CPU_ARCH -O3 -pipe -fno-plt -fexceptions -flto=auto"

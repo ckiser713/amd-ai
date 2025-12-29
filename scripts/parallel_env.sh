@@ -227,7 +227,7 @@ apply_zen5_cflags() {
   local arch="${DETECTED_CPU_ARCH:-znver5}"
   local base_cflags="-march=$arch -mtune=$arch -O3 -pipe -fno-plt -fexceptions"
   local avx_flags="-mavx512f -mavx512bw -mavx512vl -mavx512dq -mavx512cd -mavx512vbmi -mavx512vbmi2 -mavx512vnni -mavx512bitalg -mavx512vpopcntdq"
-  local lto_flags="-flto=auto -fuse-linker-plugin"
+  local lto_flags="-flto=auto"
   
   export ZEN5_CFLAGS="$base_cflags $avx_flags $lto_flags"
   export ZEN5_CXXFLAGS="$ZEN5_CFLAGS"

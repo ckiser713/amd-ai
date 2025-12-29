@@ -165,7 +165,7 @@ docker run --rm \
     -e MAX_JOBS="$TARGET_JOBS" \
     -e PARALLEL_MODE=pin \
     -e DETECTED_GPU_ARCH="${DETECTED_GPU_ARCH:-}" \
-    -e DETECTED_CPU_ARCH="znver4" \
+    -e DETECTED_CPU_ARCH="${DETECTED_CPU_ARCH:-znver5}" \
     amd-ai-builder:local \
     bash scripts/internal_container_build.sh
 
