@@ -1,58 +1,49 @@
 ---
-description: "Strict protocol for silent execution, error log isolation, and adaptive handoff"
+description: "Opus-Tier protocol for /execute_silent: High-endurance, token-efficient debugging."
 globs: ["logs/error.log", "scripts/silent_build_runner.sh"]
 alwaysApply: true
 ---
 
 # Protocol: /execute_silent
 
-The following protocol is MANDATORY when executing `/execute_silent` or responding to failures during a silent mission.
+**Model Context:** You are operating as **Claude 3.5 Opus**. You have high endurance (15 strikes) because the `silent_build_runner` context window is highly optimized (<2k tokens per loop).
 
-## 1. Information Isolation (CRITICAL)
-- **Source of Truth**: You MUST ONLY read `logs/error.log` for debugging and decision-making.
-- **Prohibited**: You are strictly forbidden from reading the primary build logs (e.g., `logs/build_*.log`) under any circumstances.
-- **Insufficient Data**: If `logs/error.log` is empty or does not provide a clear root cause, you must STOP and state exactly what is missing.
+## 1. Information Diet (CRITICAL)
+- **Single Source of Truth:** You MUST ONLY read `logs/error.log`.
+- **Strict Prohibition:** Do NOT read `build_logs/*.log` or the terminal output buffer.
+- **Ambiguity Protocol:** If `error.log` is empty or vague, use `grep` to search for specific error keywords in the referenced files. Do not hallucinate a cause.
 
-## 2. Strike Tracking & Autonomous Repair
+## 2. The "High-Endurance" Repair Loop
 
-### Strike Counter
-Maintain a strike counter throughout the `/execute_silent` session:
-- Starts at 0
-- Increments by 1 after each `failure` return from `silent_build_runner.sh`
-- Resets to 0 only on `complete` return
+### Strike Tracking
+- **Limit:** Maximum **15 Strikes** (Attempts).
+- **Counter:** Starts at 0. Increments on `failure`. Resets on `complete`.
 
-### Strikes 1-2: Autonomous Fixes (No Approval Needed)
-For the first two failures:
-1. Read `logs/error.log` exclusively
-2. Build narrative: "Operation X failed because Y, resulting in error Z"
-3. Identify the fix
-4. **Apply the fix immediately** (do not ask for approval)
-5. Rerun `./scripts/silent_build_runner.sh`
-6. Continue loop
+### Attempts 1-14: Rapid Reasoning Cycle
+For each failure, execute this sequence **immediately** (Turbo Mode):
+1.  **Ingest:** Read `logs/error.log`.
+2.  **Analyze:** Map the error stack trace to the source code. Look for logical conflicts, dependency mismatches (specifically `gfx1151`/`znver5` constraints), or syntax errors.
+3.  **Plan & Execute:** Apply the surgical fix directly.
+4.  **Verify:** Rerun `./scripts/silent_build_runner.sh`.
 
-### Strike 3: Confidence Assessment for 4th Attempt
-After the **3rd consecutive failure**, before attempting a 4th fix:
+### Strike 15: The Confidence Checkpoint
+If the build fails a **15th consecutive time**, you must pause before the 16th attempt.
+- **Self-Evaluation:** Evaluate your confidence in the next proposed fix.
+- **Threshold:**
+    -   **If Confidence ≥ 85%:** Proceed with the fix and rerun the runner.
+    -   **If Confidence < 85%:** **HALT** immediately.
+- **Escalation (On Halt):** Generate a **Handoff Artifact** containing:
+    1.  **The Diagnosis:** Why 15 attempts failed.
+    2.  **The Evidence:** The stubborn error lines from `error.log`.
+    3.  **The Recommendation:** Switch to **Gemini 1.5 Pro (High)** for larger context windows or **Human Intervention**.
 
-> [!IMPORTANT]  
-> **Confidence Checkpoint**: You must evaluate your confidence in the proposed 4th fix.
+## 3. Turbo Mode Allow List
+The following commands do NOT require user approval during this mission:
+- `./scripts/silent_build_runner.sh`
+- `cat logs/error.log`
+- `grep -r "pattern" .` (Read-only searches)
+- `sed`, `awk`, or file writes to apply fixes.
 
-- **If confidence ≥ 85%**: 
-  - Apply fix #4 immediately
-  - Rerun `./scripts/silent_build_runner.sh`
-  
-- **If confidence < 85%**:
-  - **HALT** autonomous execution immediately
-  - Generate a **Handoff Artifact** containing:
-    1. Summary of all 3 failed attempts and their fixes
-    2. Current contents of `logs/error.log`
-    3. Copy-pasteable prompt for the next model
-  - **Recommend** switching to:
-    - **Gemini 1.5 Pro (High)**: For deep reasoning and large context
-    - **Claude 3.5 Opus**: For complex architectural refactoring
-
-## 3. Allow List (Turbo Mode)
-The following actions are auto-approved during this workflow:
-- Reading `logs/error.log`
-- Running `./scripts/silent_build_runner.sh`
-- Making code edits to fix issues identified in `logs/error.log`
-- `grep` on log files (read-only)
+## 4. Governance Checks
+- **Lock File:** Before editing ANY script, check for `script_name.sh.lock`. If it exists, you **MUST** ask for permission to unlock it.
+- **Audit:** Sign `change.log` with "Status: IN_PROGRESS" before starting your first fix.

@@ -182,3 +182,33 @@ The file build_config/dependency_matrix.json tracks:
 4. Upstream/downstream dependencies.
 
 Agents should review this matrix before proposing changes that affect dependencies.
+10. Documentation Standards & Creation Protocol (STRICT)
+
+To prevent repository clutter and fragmentation, strict rules apply to the creation and management of documentation files.
+
+A. Zero-Creation Policy
+Agents are **STRICTLY PROHIBITED** from creating new Markdown (`.md`), Text (`.txt`), or log files autonomously.
+* **Prohibited**: `update_log.md`, `fix_notes.md`, `error_summary.txt`, `temp_guide.md`.
+* **Why**: Information fragmentation destroys knowledge retrieval.
+
+B. Consolidation First Strategy
+New information must be integrated into the existing canonical structure:
+1.  **Architecture & High-Level Logic**: Update `README.md`.
+2.  **Commands & Quick Steps**: Update `QUICK_REFERENCE.md`.
+3.  **Deep Technical Details/Reference**: Update `COMPLETE_GUIDE.md`.
+4.  **Agent Operating Rules**: Update `AGENTS.md`.
+5.  **Build/Script Logic**: Add comments directly to the relevant `.sh` script.
+
+C. Authorized Creation Flows
+A new documentation file may ONLY be created under one condition:
+* **Condition**: The user explicitly issues the command: *"Create a new document named [NAME]."*
+* **Protocol**:
+    1.  **Location**: Must be created in the repository root.
+    2.  **Naming**: MUST use `SCREAMING_SNAKE_CASE.md` (e.g., `DEPLOYMENT_OPS.md`, `SECURITY_AUDIT.md`).
+    3.  **Metadata**: The file must start with a `# Title` and a brief description of its specific scope.
+
+D. Orphan Cleanup Authority
+Agents are authorized and encouraged to:
+1.  Identify "orphan" files (e.g., `notes.md`, `todo.txt`) that are not part of the canonical set.
+2.  Merge their valuable content into `COMPLETE_GUIDE.md`.
+3.  Delete the orphan file and log the action in `change.log`.

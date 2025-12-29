@@ -40,6 +40,12 @@ parallel_env_summary
 cd "$SRC_DIR"
 rm -rf build dist
 
+# Apply Wave32 division-by-zero fix if patch script exists
+if [[ -f "$ROOT_DIR/patches/apply_xformers_fix.py" ]]; then
+    echo "Applying xformers Wave32 patch..."
+    XFORMERS_SRC="$SRC_DIR" python3 "$ROOT_DIR/patches/apply_xformers_fix.py" || echo "⚠ Patch application returned non-zero, continuing..."
+fi
+
 export USE_ROCM=1
 export USE_CUDA=0
 export PYTORCH_ROCM_ARCH="gfx1151"

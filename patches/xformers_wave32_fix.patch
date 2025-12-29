@@ -1,0 +1,33 @@
+diff --git a/third_party/composable_kernel_tiled/include/ck_tile/ops/fmha/pipeline/block_fmha_bwd_pipeline_default_policy_hip.hpp b/third_party/composable_kernel_tiled/include/ck_tile/ops/fmha/pipeline/block_fmha_bwd_pipeline_default_policy_hip.hpp
+index abcdef1..1234567 100644
+--- a/third_party/composable_kernel_tiled/include/ck_tile/ops/fmha/pipeline/block_fmha_bwd_pipeline_default_policy_hip.hpp
++++ b/third_party/composable_kernel_tiled/include/ck_tile/ops/fmha/pipeline/block_fmha_bwd_pipeline_default_policy_hip.hpp
+@@ -724,9 +724,9 @@
+ 
+         constexpr auto kfold = (KPackT * MN0 * 2 > 128) ? 1 : 128 / (KPackT * MN0 * 2);
++        constexpr auto divisor = kfold * K0PerThreadWrite / K0PerThreadRead;
+         constexpr auto KThreadReadPerm =
+-            (kfold * K0PerThreadWrite / K0PerThreadRead) > 1
+-                ? KThreadRead / (kfold * K0PerThreadWrite / K0PerThreadRead)
++            divisor > 1
++                ? KThreadRead / divisor
+                 : KThreadRead;
+ 
+         // 1<=mnpair<=n0
+@@ -1805,10 +1805,11 @@
+             constexpr index_t MFMA_INST_LDS_WRITE = LDS_WRITE_INST / LDS_WRITE_PER_MFMA;
+ 
++            constexpr index_t denom = (MFMA_INST - MFMA_INST_LDS_WRITE);
++            constexpr index_t safe_denom = denom > 0 ? denom : 1; 
++
+             constexpr index_t LDS_READ_PER_MFMA =
+-                (MFMA_INST - MFMA_INST_LDS_WRITE) > 0
+-                    ? LDS_READ_INST / (MFMA_INST - MFMA_INST_LDS_WRITE) > 0
+-                          ? LDS_READ_INST / (MFMA_INST - MFMA_INST_LDS_WRITE)
++                denom > 0
++                    ? LDS_READ_INST / safe_denom > 0
++                          ? LDS_READ_INST / safe_denom
+                           : 1
+                     : 0;
+ 
+             static_for<0, MFMA_INST_LDS_WRITE, 1>{}([&](auto i) {

@@ -14,6 +14,15 @@ GIT_JOBS="${GIT_JOBS:-$MAX_JOBS}"
 
 echo "Optimizing git clone/submodule throughput (jobs=$GIT_JOBS)..."
 
+safe_git_cleanup() {
+    local dir="$1"
+    if [[ -d "$dir/.git" ]]; then
+        # Remove stale lock files that might block git operations
+        find "$dir/.git" -name "*.lock" -type f -delete 2>/dev/null || true
+    fi
+}
+
+
 ensure_repo() {
     local target_dir="$1"
     local repo_url="$2"
@@ -29,6 +38,7 @@ ensure_repo() {
         fi
     else
         echo ">>> Updating $target_dir..."
+        safe_git_cleanup "$target_dir"
         (
             cd "$target_dir"
             git fetch origin "$branch"
@@ -81,6 +91,7 @@ for repo in "${repos[@]}"; do
   fi
 
   echo "Prefetching submodules/objects: $repo"
+  safe_git_cleanup "$repo"
   (
     cd "$repo" || exit
     git config fetch.recurseSubmodules on-demand || true

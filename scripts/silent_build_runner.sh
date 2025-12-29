@@ -28,7 +28,11 @@ if [[ -f "$CHANGE_LOG" ]]; then
 fi
 
 # Execute full build pipeline silently
-./scripts/80_run_complete_build_docker.sh > "$FULL_LOG" 2>&1
+# Remove git locks to prevent zombie lock issues
+rm -f .git/index.lock .git/modules/**/index.lock
+# Use --skip to preserve patched source files (prefetch resets them)
+# Run prefetch manually with: ./scripts/06_prefetch_all_dependencies.sh before first build
+./scripts/80_run_complete_build_docker.sh --skip > "$FULL_LOG" 2>&1
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -eq 0 ]; then
@@ -43,8 +47,8 @@ else
         echo -e "\n--- DETECTED ERROR PATTERNS ---"
         # Grep for fatal errors, python tracebacks, or pip conflicts
         grep -Ei "(error|failure|conflict|denied|missing|not found|traceback|nvidia|cuda)" "$FULL_LOG" | tail -n 20
-        echo -e "\n--- TAIL 50 ---"
-        tail -n 50 "$FULL_LOG"
+        echo -e "\n--- TAIL 250 ---"
+        tail -n 250 "$FULL_LOG"
     } > "$ERROR_LOG"
     
     # =========================================================================
@@ -74,6 +78,7 @@ else
         echo "**Deep Dive Findings**: (pending agent analysis)"
         echo "**Applied Fix**: (pending)"
         echo "**Recommendation**: Run \`cat logs/error.log\` and investigate"
+        echo "**ESTIMATED TOKEN USAGE**: (pending)"
         echo "**End Time**: (pending)"
     } >> "$CHANGE_LOG"
     echo "📋 Appended repair request to change.log"
