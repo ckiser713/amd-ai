@@ -91,7 +91,7 @@ pip install --force-reinstall "$ARTIFACTS_DIR"/triton-*.whl
 # Verify
 echo ""
 echo "=== Verification ==="
-cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && python -c "
+cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && cd /tmp && python -c "
 import triton
 import triton.language as tl
 print(f'Triton version: {triton.__version__}')
