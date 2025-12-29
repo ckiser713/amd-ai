@@ -50,17 +50,17 @@ else
     cd "$SRC_VISION"
     rm -rf build dist
     
-    export FORCE_CUDA=0
+    export FORCE_CUDA=1
     export USE_ROCM=1
     export TORCHVISION_USE_FFMPEG=1
     export TORCHVISION_USE_VIDEO_CODEC=1
     export PYTORCH_ROCM_ARCH="gfx1151"
     export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
     export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
+    export MAX_JOBS="$MAX_JOBS"
     
-    # Use setup.py with explicit parallel flag (same as PyTorch build)
-    python setup.py bdist_wheel -- "-j$MAX_JOBS"
-    cp dist/torchvision-0.20.1*.whl "$ARTIFACTS_DIR/"
+    # Build wheel (FORCE_CUDA=1 enables CUDA API compat for ROCm)
+    pip wheel . --no-deps --no-build-isolation --wheel-dir="$ARTIFACTS_DIR" -v
     pip install "$ARTIFACTS_DIR"/torchvision-0.20.1*.whl --force-reinstall --no-deps
 fi
 
