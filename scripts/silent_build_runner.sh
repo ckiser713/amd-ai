@@ -7,11 +7,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT_DIR"
 
-LOG_DIR="build_logs"
+LOG_DIR="logs"
 mkdir -p "$LOG_DIR"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 FULL_LOG="$LOG_DIR/build_${TIMESTAMP}.log"
-ERROR_LOG="error.log"
+ERROR_LOG="$LOG_DIR/error.log"
 CHANGE_LOG="change.log"
 
 # =========================================================================
@@ -47,7 +47,20 @@ else
         tail -n 50 "$FULL_LOG"
     } > "$ERROR_LOG"
     
-    echo "Investigate: $(readlink -f $ERROR_LOG)"
+    # =========================================================================
+    # ERROR LOG ARCHIVAL: Synchronize with build log timestamp for traceability
+    # =========================================================================
+    # Extract timestamp from the build log filename to ensure 1:1 mapping
+    ARCHIVE_TIMESTAMP=$(basename "$FULL_LOG" | sed 's/^build_//; s/\.log$//')
+    ARCHIVED_ERROR="$LOG_DIR/error_${ARCHIVE_TIMESTAMP}.log"
+    
+    if [[ -s "$ERROR_LOG" ]]; then
+        # Copy error.log to timestamped archive for historical debugging
+        cp "$ERROR_LOG" "$ARCHIVED_ERROR"
+        echo "📦 Archived: $ARCHIVED_ERROR"
+    fi
+    
+    echo "Investigate: $(readlink -f "$ERROR_LOG")"
     
     # =========================================================================
     # POST-FAILURE HOOK: Append agent-required template to change.log
@@ -57,10 +70,10 @@ else
         echo "## [Agent-Required] | $(date '+%Y-%m-%d %H:%M')"
         echo "**Status**: BROKEN"
         echo "**Error Reported**: Build failed with exit code $EXIT_CODE"
-        echo "**Files Implicated**: See $ERROR_LOG"
+        echo "**Files Implicated**: See logs/error.log"
         echo "**Deep Dive Findings**: (pending agent analysis)"
         echo "**Applied Fix**: (pending)"
-        echo "**Recommendation**: Run \`cat error.log\` and investigate"
+        echo "**Recommendation**: Run \`cat logs/error.log\` and investigate"
         echo "**End Time**: (pending)"
     } >> "$CHANGE_LOG"
     echo "📋 Appended repair request to change.log"
@@ -68,7 +81,7 @@ else
     # =========================================================================
     # ANTIGRAVITY REPAIR INSTRUCTIONS FOR AI AGENT
     # =========================================================================
-    # 1. READ: Inspect error.log.
+    # 1. READ: Inspect logs/error.log.
     # 2. LOG: Sign into change.log with a random name and Start Time.
     # 3. ANALYZE: Conduct deep analysis of files identified in the error.
     # 4. REPAIR: Apply fixes (Ensure you prioritize artifacts over PyPI).

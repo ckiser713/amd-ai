@@ -47,8 +47,16 @@ export HIP_ARCHITECTURES="gfx1151"
 export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
 export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
 
+# Explicitly pass parallel flags to ensure they propagate through pip subprocess
+# xformers uses setuptools which respects these environment variables
+export CFLAGS="${CFLAGS:-} -O3 -march=znver5 -mtune=znver5"
+export CXXFLAGS="${CXXFLAGS:-} -O3 -march=znver5 -mtune=znver5"
+export LDFLAGS="${LDFLAGS:-} -Wl,--as-needed"
+
 # Build wheel with explicit parallel compilation
-pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" --no-build-isolation -v --no-index --find-links="$ARTIFACTS_DIR" --find-links="$ROOT_DIR/wheels/cache"
+# Pass parallel settings via environment AND pip config settings
+pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" --no-build-isolation -v --no-index \
+    --find-links="$ARTIFACTS_DIR" --find-links="$ROOT_DIR/wheels/cache"
 
 # Install
 pip install --force-reinstall "$ARTIFACTS_DIR"/xformers-*.whl

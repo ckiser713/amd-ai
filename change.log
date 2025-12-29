@@ -98,3 +98,126 @@ Recommendation: Future agents must sign in here before starting work.
 **Applied Fix**: (pending)
 **Recommendation**: Run `cat error.log` and investigate
 **End Time**: (pending)
+
+## Agent-Antigravity | 2025-12-29 18:37
+DATE: 2025-12-29
+ACTION: Patch xformers ck_tile for Wave32 (gfx1151)
+FILES: scripts/32_build_xformers.sh, src/extras/xformers/third_party/composable_kernel_tiled/include/ck_tile/ops/fmha/pipeline/block_fmha_bwd_pipeline_default_policy_hip.hpp
+UPSTREAM: Verified dependency on PyTorch 2.9.1 ROCm artifact.
+DOWNSTREAM: No direct blockers; enables stable FMHA for vLLM/stack.
+ESTIMATED TOKEN USAGE: ~1500 tokens
+DETAILS: Fixed division by zero in KGroup and LDS_READ_FREQ templates.
+Strike 1: Fixed division by zero in block_fmha_bwd_pipeline_default_policy_hip.hpp
+
+## [Agent-Required] | 2025-12-29 18:44
+**Status**: BROKEN
+**Error Reported**: Build failed with exit code 137
+**Files Implicated**: See error.log
+**Deep Dive Findings**: (pending agent analysis)
+**Applied Fix**: (pending)
+**Recommendation**: Run `cat error.log` and investigate
+**End Time**: (pending)
+
+## [Agent-Required] | 2025-12-29 18:44
+**Status**: BROKEN
+**Error Reported**: Build failed with exit code 128
+**Files Implicated**: See error.log
+**Deep Dive Findings**: (pending agent analysis)
+**Applied Fix**: (pending)
+**Recommendation**: Run `cat error.log` and investigate
+**End Time**: (pending)
+Strike 2: Removed stale git lock file in onnxruntime
+
+## [Agent-Required] | 2025-12-29 18:49
+**Status**: BROKEN
+**Error Reported**: Build failed with exit code 1
+**Files Implicated**: See error.log
+**Deep Dive Findings**: (pending agent analysis)
+**Applied Fix**: (pending)
+**Recommendation**: Run `cat error.log` and investigate
+**End Time**: (pending)
+
+## [Agent-Required] | 2025-12-29 18:52
+**Status**: BROKEN
+**Error Reported**: Build failed with exit code 137
+**Files Implicated**: See error.log
+**Deep Dive Findings**: (pending agent analysis)
+**Applied Fix**: (pending)
+**Recommendation**: Run `cat error.log` and investigate
+**End Time**: (pending)
+
+## Agent-Archival-System | 2025-12-29 20:35
+**STATUS**: IMPLEMENTED
+**ACTION**: Implement synchronized error log archival system
+**FILES**: scripts/silent_build_runner.sh
+**UPSTREAM**: None (standalone utility)
+**DOWNSTREAM**: Enables Strike Tracking protocol compliance
+**ESTIMATED TOKEN USAGE**: ~800 tokens
+**DETAILS**: 
+
+✅ IMPLEMENTATION COMPLETE
+
+**Architecture:**
+• Error log archival automatically triggered on build failure
+• Timestamp extracted from build_YYYYMMDD_HHMMSS.log filename
+• Error archive created as error_YYYYMMDD_HHMMSS.log in build_logs/
+• Creates 1:1 mapping between build logs and error snapshots
+
+**Logic Flow:**
+1. Build pipeline generates: build_20251229_185215.log
+2. On failure, error.log is populated with error patterns
+3. Archival logic: Extract "20251229_185215" from build log filename
+4. Archive created: build_logs/error_20251229_185215.log
+5. Both files preserved in build_logs/ for historical debugging
+
+**Compliance:**
+• Maintains traceability for Strike Tracking (Strike 1, 2, 3...)
+• Enables /execute_silent protocol without reading primary build logs
+• Preserves error context alongside full build output
+• Timestamps allow automated correlation of related failures
+
+**Key Features:**
+• Robust extraction: sed pattern handles build_YYYYMMDD_HHMMSS.log reliably
+• Conditional archival: Only archives if error.log is non-empty
+• Non-destructive: error.log remains available for active inspection
+• Transparent: Prints confirmation message on archival completion
+
+**Testing Protocol:**
+Run: ./scripts/silent_build_runner.sh
+Expected: On failure → creates build_logs/error_TIMESTAMP.log matching build_TIMESTAMP.log
+
+**Recommendation**: Use with Strike Tracking system for automated failure correlation
+**End Time**: 2025-12-29 20:35
+
+## [Agent-Required] | 2025-12-29 18:56
+**Status**: BROKEN
+**Error Reported**: Build failed with exit code 137
+**Files Implicated**: See error.log
+**Deep Dive Findings**: (pending agent analysis)
+**Applied Fix**: (pending)
+**Recommendation**: Run `cat error.log` and investigate
+**End Time**: (pending)
+
+## [Agent-Required] | 2025-12-29 19:01
+**Status**: BROKEN
+**Error Reported**: Build failed with exit code 137
+**Files Implicated**: See error.log
+**Deep Dive Findings**: (pending agent analysis)
+**Applied Fix**: (pending)
+**Recommendation**: Run `cat error.log` and investigate
+**End Time**: (pending)
+
+## [Agent-Required] | 2025-12-29 19:01
+**Status**: BROKEN
+**Error Reported**: Build failed with exit code 128
+**Files Implicated**: See error.log
+**Deep Dive Findings**: (pending agent analysis)
+**Applied Fix**: (pending)
+**Recommendation**: Run `cat error.log` and investigate
+**End Time**: (pending)
+
+## [Agent-Required] | 2025-12-29 21:05
+**Status**: COMPLETED
+**Action**: Refactor logging to logs/ directory.
+**Files**: scripts/silent_build_runner.sh, .antigravity/rules/execute_silent.mdc, .gitignore.
+**Details**: Consolidated error.log and build history into logs/ for cleaner root workspace. Updated agent protocols to reference logs/error.log.

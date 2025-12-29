@@ -153,6 +153,8 @@ fi
 # 8. Fix xformers ck_tile warpSize constexpr error
 sed -i 's/return warpSize;/#if defined(__AMDGCN_WAVEFRONT_SIZE__)\n    return __AMDGCN_WAVEFRONT_SIZE__;\n#else\n    return warpSize;\n#endif/g' src/extras/xformers/third_party/composable_kernel_tiled/include/ck_tile/core/arch/arch.hpp
 sed -i 's/return warpSize;/#if defined(__AMDGCN_WAVEFRONT_SIZE__)\n    return __AMDGCN_WAVEFRONT_SIZE__;\n#else\n    return warpSize;\n#endif/g' src/extras/xformers/third_party/composable_kernel_tiled/include/ck_tile/core/arch/arch_hip.hpp
+# 9. Apply Agent Fix for division by zero in xformers
+python3 patches/apply_xformers_fix.py
 
 # Step C: Execute the Build Pipeline
 # Injected Env Vars:
