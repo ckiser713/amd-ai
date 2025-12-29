@@ -1,0 +1,74 @@
+#!/bin/bash
+# ============================================
+# ONNX Runtime 1.20.1 with ROCm Execution Provider
+# Benefit: Fast ONNX model inference on gfx1151
+# ============================================
+set -e
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT_DIR/scripts/10_env_rocm_gfx1151.sh"
+
+ORT_VERSION="1.20.1"
+SRC_DIR="$ROOT_DIR/src/extras/onnxruntime"
+ARTIFACTS_DIR="$ROOT_DIR/artifacts"
+mkdir -p "$ARTIFACTS_DIR"
+
+if [[ ! -d "$SRC_DIR" ]]; then
+    echo "Source not found in $SRC_DIR. Run scripts/05_git_parallel_prefetch.sh first."
+    exit 1
+fi
+
+echo "============================================"
+echo "Building ONNX Runtime $ORT_VERSION for ROCm"
+echo "============================================"
+
+cd "$SRC_DIR"
+rm -rf build
+
+# Install build dependencies
+pip install -q cmake ninja numpy packaging
+
+export PYTORCH_ROCM_ARCH="gfx1151"
+export ROCM_VERSION="7.1.1"
+
+# Build with ROCm EP
+./build.sh \
+    --config Release \
+    --build_shared_lib \
+    --parallel $(nproc) \
+    --skip_tests \
+    --use_rocm \
+    --rocm_home "${ROCM_PATH}" \
+    --rocm_version "${ROCM_VERSION}" \
+    --build_wheel \
+    --cmake_extra_defines \
+        CMAKE_HIP_ARCHITECTURES="gfx1151" \
+        onnxruntime_BUILD_UNIT_TESTS=OFF \
+        CMAKE_C_FLAGS="${CFLAGS}" \
+        CMAKE_CXX_FLAGS="${CXXFLAGS}"
+
+# Copy wheel
+cp build/Linux/Release/dist/onnxruntime*.whl "$ARTIFACTS_DIR/"
+
+# Install
+pip install --force-reinstall "$ARTIFACTS_DIR"/onnxruntime*.whl
+
+# Verify
+echo ""
+echo "=== Verification ==="
+python -c "
+import onnxruntime as ort
+print(f'ONNX Runtime version: {ort.__version__}')
+print(f'Available providers: {ort.get_available_providers()}')
+print(f'Device: {ort.get_device()}')
+
+# Check ROCm EP
+if 'ROCMExecutionProvider' in ort.get_available_providers():
+    print('✅ ROCm Execution Provider available')
+else:
+    print('⚠️ ROCm EP not available, using CPU')
+"
+
+echo ""
+echo "=== ONNX Runtime build complete ==="
+echo "Wheel: $ARTIFACTS_DIR/onnxruntime*.whl"
