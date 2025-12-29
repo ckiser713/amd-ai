@@ -13,14 +13,17 @@ CPU_THREADS=$(lscpu | grep -i "Thread(s) per core" | awk '{print $4}')
 CPU_ARCH=""
 
 # Determine CPU microarchitecture
-if [[ "$CPU_MODEL" == *"Ryzen AI Max+"* ]] || [[ "$CPU_MODEL" == *"Zen 4"* ]]; then
+if [[ "$CPU_MODEL" == *"Ryzen AI Max+"* ]] || [[ "$CPU_MODEL" == *"Zen 5"* ]]; then
+    CPU_ARCH="znver5"
+    echo "✅ Detected Zen 5 CPU architecture (znver5)"
+elif [[ "$CPU_MODEL" == *"Zen 4"* ]]; then
     CPU_ARCH="znver4"
     echo "✅ Detected Zen 4 CPU architecture (znver4)"
 else
     # Fallback based on CPU flags
     if lscpu | grep -q "avx512"; then
-        CPU_ARCH="znver4"
-        echo "⚠️  Unknown CPU model but AVX-512 detected, assuming znver4"
+        CPU_ARCH="znver5"
+        echo "⚠️  Unknown CPU model but AVX-512 detected, assuming znver5 (Strix Halo optimized)"
     else
         CPU_ARCH="x86-64-v3"
         echo "⚠️  Using generic x86-64-v3 CPU target"

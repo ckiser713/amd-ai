@@ -22,12 +22,12 @@ if [[ ! -f "$MODEL_PATH" ]]; then
 fi
 
 # Determine which server to use
-if [[ -f "llama-server-rocm" ]] || [[ -f "src/llama.cpp/build/rocm/bin/llama-server" ]]; then
-    SERVER_BINARY="llama-server-rocm"
+if [[ -f "artifacts/bin/llama-server-rocm" ]] || [[ -f "src/extras/llama-cpp/build/bin/llama-server" ]]; then
+    SERVER_BINARY="${SERVER_BINARY:-artifacts/bin/llama-server-rocm}"
     BUILD_TYPE="ROCm"
     echo "Using ROCm-accelerated server"
-elif [[ -f "llama-server-cpu" ]] || [[ -f "src/llama.cpp/build/cpu/bin/llama-server" ]]; then
-    SERVER_BINARY="llama-server-cpu"
+elif [[ -f "artifacts/bin/llama-server-cpu" ]] || [[ -f "src/extras/llama-cpp/build/cpu/bin/llama-server" ]]; then
+    SERVER_BINARY="${SERVER_BINARY:-artifacts/bin/llama-server-cpu}"
     BUILD_TYPE="CPU"
     echo "Using CPU-only server"
 else

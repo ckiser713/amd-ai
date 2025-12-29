@@ -41,9 +41,9 @@ if [[ ! -d "$LLAMA_CPP_DIR" ]]; then
 else
     cd "$LLAMA_CPP_DIR"
     # Keep shallow history to depth=1
-    git fetch --depth=1 origin master
-    git checkout master
-    git reset --hard origin/master
+    git fetch --depth=1 origin b7551
+    git checkout b7551
+    git reset --hard origin/b7551
 fi
 
 # Clean and create build directory
@@ -59,8 +59,8 @@ echo "CMake/Ninja parallel: $CMAKE_BUILD_PARALLEL_LEVEL ($NINJAFLAGS)"
 if command -v ninja &> /dev/null; then
     cmake "$LLAMA_CPP_DIR" \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_C_FLAGS="-march=znver4 -O3 -flto=auto -pipe $CFLAGS" \
-        -DCMAKE_CXX_FLAGS="-march=znver4 -O3 -flto=auto -pipe $CXXFLAGS" \
+        -DCMAKE_C_FLAGS="-march=znver5 -O3 -flto=auto -pipe $CFLAGS" \
+        -DCMAKE_CXX_FLAGS="-march=znver5 -O3 -flto=auto -pipe $CXXFLAGS" \
         -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
         -GNinja \
         -DGGML_HIP=ON \
@@ -82,8 +82,8 @@ if command -v ninja &> /dev/null; then
 else
     cmake "$LLAMA_CPP_DIR" \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_C_FLAGS="-march=znver4 -O3 -flto=auto -pipe $CFLAGS" \
-        -DCMAKE_CXX_FLAGS="-march=znver4 -O3 -flto=auto -pipe $CXXFLAGS" \
+        -DCMAKE_C_FLAGS="-march=znver5 -O3 -flto=auto -pipe $CFLAGS" \
+        -DCMAKE_CXX_FLAGS="-march=znver5 -O3 -flto=auto -pipe $CXXFLAGS" \
         -DGGML_HIP=ON \
         -DGGML_HIPBLAS=ON \
         -DLLAMA_HIPBLAS=ON \

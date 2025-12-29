@@ -15,7 +15,7 @@ fi
 # Activate virtual environment
 source .venv/bin/activate
 
-# Upgrade pip and setuptools
+# Upgrade pip and setuptools inside the virtual environment
 pip install --upgrade pip setuptools wheel
 
 # Install build dependencies
@@ -30,18 +30,21 @@ pip install \
     tqdm \
     packaging
 
-# Install Jupyter for development (optional)
-pip install \
-    jupyter \
-    matplotlib \
-    pandas
+# Install development tools only if not in offline mode
+if [[ -z "${PIP_NO_INDEX:-}" ]]; then
+    # Install Jupyter for development (optional)
+    pip install \
+        jupyter \
+        matplotlib \
+        pandas
 
-# Install development tools
-pip install \
-    black \
-    flake8 \
-    mypy \
-    pytest
+    # Install development tools
+    pip install \
+        black \
+        flake8 \
+        mypy \
+        pytest
+fi
 
 # Create activation script
 cat > activate_env.sh << 'EOF'

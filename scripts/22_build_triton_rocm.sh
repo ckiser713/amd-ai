@@ -31,9 +31,10 @@ rm -rf python/build python/dist
 export TRITON_BUILD_WITH_CLANG_LLD=1
 export TRITON_BUILD_PROTON=OFF
 export TRITON_CODEGEN_AMD_HIP_BACKEND=1
-export LLVM_SYSPATH=${ROCM_PATH}/llvm
+# export LLVM_SYSPATH=${ROCM_PATH}/llvm
 export AMDGPU_TARGETS="gfx1151"
 export PYTORCH_ROCM_ARCH="gfx1151"
+export TRITON_CODEGEN_BACKENDS="amd"
 
 # Additional ROCm configuration
 export TRITON_USE_ROCM=ON
@@ -41,6 +42,10 @@ export ROCM_PATH="${ROCM_PATH}"
 
 # Install build dependencies
 pip install -q cmake ninja pybind11
+
+# Fix triton/profiler missing directory error (setup.py always expects it)
+mkdir -p python/triton/profiler
+touch python/triton/profiler/__init__.py
 
 # Apply gfx1151 patches if needed (Idempotent patch)
 find . -name "*.py" -exec grep -l "gfx90" {} \; | while read f; do

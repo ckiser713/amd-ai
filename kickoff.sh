@@ -38,9 +38,29 @@ run_phase "20_build_pytorch_rocm.sh"
 # 4) vLLM (ROCm if available, else CPU-only)
 run_phase "30_build_vllm_rocm_or_cpu.sh"
 
-# 5) llama.cpp builds (CPU + ROCm)
+# 5) Extra optimized components (MPG-1 / Zen 5)
+run_phase "39_build_pillow_simd.sh"
+run_phase "37_build_faiss_rocm.sh"
+run_phase "35_build_onnxruntime_rocm.sh"
+run_phase "33_build_bitsandbytes.sh"
+
+# 6) llama.cpp builds (CPU + ROCm)
 run_phase "40_build_llama_cpp_cpu.sh"
 run_phase "41_build_llama_cpp_rocm.sh"
+
+# 7) Generate install-gfx1151-stack.sh
+echo
+echo ">>> Generating install-gfx1151-stack.sh..."
+cat > artifacts/install-gfx1151-stack.sh << 'EOF'
+#!/usr/bin/env bash
+set -e
+echo "Installing Zenith MPG-1 Stack (gfx1151)..."
+# Force reinstall of wheels in artifacts/
+pip install --force-reinstall --no-deps artifacts/*.whl
+echo "Done. Stack installed."
+EOF
+chmod +x artifacts/install-gfx1151-stack.sh
+echo "Generated artifacts/install-gfx1151-stack.sh"
 
 echo
 echo "=== kickoff complete ==="

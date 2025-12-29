@@ -35,7 +35,7 @@ export HCC_AMDGPU_TARGET="$ROCM_GFX_ARCH"
 
 # ROCm library paths
 export LD_LIBRARY_PATH="$ROCM_PATH/lib:$ROCM_PATH/lib64:$HIP_PATH/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-export PATH="$ROCM_PATH/bin:$HIP_PATH/bin${PATH:+:$PATH}"
+export PATH="$ROCM_PATH/bin:$HIP_PATH/bin:$ROCM_PATH/llvm/bin${PATH:+:$PATH}"
 
 # Performance optimizations
 export HIP_VISIBLE_DEVICES="0"  # Use first GPU

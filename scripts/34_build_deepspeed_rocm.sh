@@ -7,6 +7,7 @@ set -e
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT_DIR/scripts/10_env_rocm_gfx1151.sh"
+source "$ROOT_DIR/scripts/11_env_cpu_optimized.sh"
 
 SRC_DIR="$ROOT_DIR/src/extras/deepspeed"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"

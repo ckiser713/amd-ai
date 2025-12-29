@@ -11,7 +11,8 @@ It focuses on three core components:
 The scripts are designed to be:
 
 - **Repo-relative** (no hard-coded home paths).
-- **Hardware-aware** (znver4 CPU, gfx1151 GPU).
+- **Repo-relative** (no hard-coded home paths).
+- **Hardware-aware** (znver5 CPU, gfx1151 GPU).
 - **Re-runnable** (clean rebuilds, cached wheels, reproducible phases).
 - **Agent-friendly** (easy for ChatGPT / Cursor / other AIs to reason about and extend).
 
@@ -45,14 +46,19 @@ amd-ai-build-system-v2/
     02_install_python_env.sh # Creates .venv under repo root
     05_git_parallel_prefetch.sh # Parallel fetch/init for git repos with submodules
 
+    00_detect_hardware.sh    # Detect CPU (Ryzen AI Max+ / znver5) / GPU (gfx1151)
     10_env_rocm_gfx1151.sh   # ROCm env for gfx1151
-    11_env_cpu_optimized.sh  # CPU env (znver4, OpenBLAS, threads)
+    11_env_cpu_optimized.sh  # CPU env (znver5, OpenBLAS, threads)
     12_env_nvidia_cuda_example.sh  # Template for future CUDA hosts
 
     20_build_pytorch_rocm.sh # Build PyTorch 2.9.1 (ROCm + CPU)
     21_build_pytorch_cpu.sh  # Build PyTorch 2.9.1 (CPU-only)
 
     30_build_vllm_rocm_or_cpu.sh   # Build vLLM; ROCm if possible, else CPU
+    33_build_bitsandbytes.sh       # BitsAndBytes (ROCm)
+    35_build_onnxruntime_rocm.sh   # ONNX Runtime (ROCm)
+    37_build_faiss_rocm.sh         # Faiss (ROCm)
+    39_build_pillow_simd.sh        # Pillow-SIMD (AVX-512)
     40_build_llama_cpp_cpu.sh      # llama.cpp CPU-optimized build
     41_build_llama_cpp_rocm.sh     # llama.cpp HIP/ROCm build (gfx1151)
 

@@ -12,8 +12,8 @@ if [[ -f "$SCRIPT_DIR/../build_config/hw_detected.env" ]]; then
     source "$SCRIPT_DIR/../build_config/hw_detected.env"
 fi
 
-# CPU optimization flags for Zen 4
-export CPU_ARCH="${DETECTED_CPU_ARCH:-znver4}"
+# CPU optimization flags for Zen 5 (Strix Halo)
+export CPU_ARCH="${DETECTED_CPU_ARCH:-znver5}"
 export CFLAGS="-march=$CPU_ARCH -O3 -pipe -fno-plt -fexceptions -flto=auto"
 export CXXFLAGS="-march=$CPU_ARCH -O3 -pipe -fno-plt -fexceptions -flto=auto"
 export LDFLAGS="-Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now -flto=auto"

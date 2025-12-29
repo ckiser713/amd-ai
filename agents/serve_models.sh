@@ -45,6 +45,7 @@ vllm serve "$MODELS_DIR/DeepSeek-V3.2-Speciale" \
     --max-model-len 131072 \
     --gpu-memory-utilization 0.7 \
     --enforce-eager \
+    --compilation-config 3 \
     --disable-log-requests \
     --host 0.0.0.0 &
 
@@ -59,6 +60,7 @@ vllm serve "$MODELS_DIR/DeepSeek-V3.2" \
     --max-model-len 131072 \
     --gpu-memory-utilization 0.8 \
     --enforce-eager \
+    --compilation-config 3 \
     --host 0.0.0.0 &
 
 EXECUTOR_PID=$!
