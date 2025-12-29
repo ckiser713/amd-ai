@@ -8,6 +8,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 source scripts/11_env_cpu_optimized.sh
+ensure_numpy_from_artifacts
+ensure_numpy_from_artifacts
 
 # Activate virtual environment (project-local, repo-relative)
 VENV_DIR="${VENV_DIR:-"$ROOT_DIR/.venv"}"

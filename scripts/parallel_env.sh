@@ -260,3 +260,18 @@ parallel_env_summary() {
     echo "    LDFLAGS=$LDFLAGS"
   fi
 }
+
+# Ensure NumPy is installed from artifacts if available
+ensure_numpy_from_artifacts() {
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  local root_dir
+  root_dir="$(cd "$script_dir/.." && pwd)"
+  local artifacts_dir="$root_dir/artifacts"
+  
+  if ls "$artifacts_dir"/numpy-*.whl 1> /dev/null 2>&1; then
+    echo "📦 Installing NumPy from artifacts..."
+    # Use --no-deps to avoid pulling in unwanted dependencies during build
+    pip install --force-reinstall --no-deps "$artifacts_dir"/numpy-*.whl
+  fi
+}

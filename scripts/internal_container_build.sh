@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # scripts/internal_container_build.sh
 set -e
+source scripts/parallel_env.sh
 
 # Ensure we have the environment variables we expect
 echo ">>> Internal Build: Max Jobs=$MAX_JOBS, Mode=$PARALLEL_MODE"
@@ -36,7 +37,7 @@ if [[ -f scripts/02_install_python_env.sh ]]; then
 fi
 
 # 1. Build NumPy FIRST (Base dependency for PyTorch, Triton, etc.)
-install_if_exists "numpy-*.whl"
+ensure_numpy_from_artifacts
 ./scripts/24_build_numpy_rocm.sh
 
 # 2. Build/Install Core Infrastructure (Needs NumPy)

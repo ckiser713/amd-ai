@@ -9,6 +9,7 @@ ARTIFACTS_DIR="${ARTIFACTS_DIR:-"$ROOT_DIR/artifacts"}"
 mkdir -p "$ARTIFACTS_DIR"
 
 source scripts/11_env_cpu_optimized.sh
+ensure_numpy_from_artifacts
 
 if [[ -f "$ARTIFACTS_DIR/llama_cpp_cpu.tar.gz" ]]; then
     echo "✅ llama.cpp CPU already exists in artifacts/, skipping build."

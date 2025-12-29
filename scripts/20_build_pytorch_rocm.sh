@@ -6,6 +6,9 @@ echo "🏗️  Building PyTorch 2.9.1 with ROCm support..."
 # Load environments
 source scripts/10_env_rocm_gfx1151.sh
 source scripts/11_env_cpu_optimized.sh
+source scripts/parallel_env.sh
+apply_parallel_env
+ensure_numpy_from_artifacts
 
 # Resolve repo root before changing directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

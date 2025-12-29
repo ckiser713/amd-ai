@@ -17,6 +17,7 @@ fi
 
 source "$SCRIPT_DIR/parallel_env.sh"
 apply_parallel_env
+ensure_numpy_from_artifacts
 
 # Ensure hardware detection exists
 if [[ ! -f "$ROOT_DIR/build_config/hw_detected.env" ]]; then

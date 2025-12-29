@@ -11,6 +11,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Load parallel environment FIRST for optimal resource usage
 source "$ROOT_DIR/scripts/parallel_env.sh"
 apply_parallel_env
+ensure_numpy_from_artifacts
 
 source "$ROOT_DIR/scripts/11_env_cpu_optimized.sh"
 
