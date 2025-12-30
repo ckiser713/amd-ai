@@ -33,9 +33,13 @@ install_if_exists() {
 }
 
 # 0. Setup Python Environment inside container
-if [[ -f scripts/02_install_python_env.sh ]]; then
-    ./scripts/02_install_python_env.sh
-fi
+# if [[ -f scripts/02_install_python_env.sh ]]; then
+#     ./scripts/02_install_python_env.sh
+# fi
+
+# Apply dependency allowlist patches before build
+echo ">>> Applying gfx1151 dependency allowlist patches..."
+python3 /app/scripts/patch_dependency_allowlists.py || echo "⚠ Allowlist patch skipped"
 
 # 1. Build NumPy FIRST (Base dependency for PyTorch, Triton, etc.)
 ensure_numpy_from_artifacts

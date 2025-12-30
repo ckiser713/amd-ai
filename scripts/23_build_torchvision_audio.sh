@@ -60,6 +60,12 @@ else
     cd "$SRC_VISION"
     rm -rf build dist
     
+    # Disable LTO for TorchVision - causes multiple definition errors with vision.o/vision_hip.o
+    # Both files define vision::cuda_version() and LTO merges them causing linker conflict
+    export CFLAGS="${CFLAGS//-flto=auto/}"
+    export CXXFLAGS="${CXXFLAGS//-flto=auto/}"
+    export LDFLAGS="${LDFLAGS//-flto=auto/}"
+    
     # Build wheel (ROCm build takes priority)
     pip wheel . --no-deps --no-build-isolation --wheel-dir="$ARTIFACTS_DIR" -v --no-index --find-links="$ARTIFACTS_DIR" --find-links="$ROOT_DIR/wheels/cache"
     pip install "$ARTIFACTS_DIR"/torchvision-0.20.1*.whl --force-reinstall --no-deps

@@ -172,6 +172,51 @@ gdb ./llama-server core
 **Date**: 2025-12-16  
 **Status**: ✅ READY
 
+---
+
+# Environment Setup (gfx1151 Masquerade)
+
+## Quick Export (Strix Halo / Kernel 6.14+)
+
+```bash
+# Source the environment (REQUIRED before any build/run)
+source scripts/10_env_rocm_gfx1151.sh
+```
+
+## Manual Exports (if needed)
+
+```bash
+# Runtime Masquerade (CRITICAL - DO NOT REMOVE)
+export HSA_OVERRIDE_GFX_VERSION=11.0.0   # Fakes gfx1100
+export ROCBLAS_STREAM_ORDER_ALLOC=1      # Memory corruption fix
+export HIP_FORCE_DEV_KERNARG=1           # Kernel launch fix
+
+# ML Framework Stabilizers
+export GGML_CUDA_ENABLE_UNIFIED_MEMORY=1 # Zero-copy for llama.cpp
+export VLLM_ENFORCE_EAGER=true           # Graph capture bypass
+export ROCSHMEM_DISABLE_MIXED_IPC=1      # IPC stabilizer
+
+# Build Target
+export PYTORCH_ROCM_ARCH=gfx1151
+export HCC_AMDGPU_TARGET=gfx1151
+```
+
+## Verify Environment
+
+```bash
+env | grep -E "HSA_OVERRIDE|ROCBLAS_STREAM|VLLM_ENFORCE|PYTORCH_ROCM"
+# Should show all 4+ variables
+```
+
+## Why Masquerade?
+
+| Problem | Solution |
+|---------|----------|
+| Node-1 Memory Access Fault | `HSA_OVERRIDE_GFX_VERSION=11.0.0` |
+| Memory corruption | `ROCBLAS_STREAM_ORDER_ALLOC=1` |
+| vLLM graph capture fails | `VLLM_ENFORCE_EAGER=true` |
+| Wave32 vs Wave64 | `-DCK_TILE_WAVE_32=1` in CXXFLAGS |
+
 
 ---
 

@@ -42,7 +42,7 @@ rm -rf build dist
 pip install -q setuptools wheel
 
 # Override CFLAGS with Pillow-SIMD specific optimizations for Zen 5
-# Override CFLAGS with Pillow-SIMD specific optimizations
+
 # Use detected architecture or fallback to znver5 for Strix Halo
 ARCH="${DETECTED_CPU_ARCH:-znver5}"
 echo "Building for Architecture: $ARCH"
@@ -52,8 +52,9 @@ export LDFLAGS="${LDFLAGS:-} -lm -lmvec"
 export LIBS="-lm -lmvec"
 export CC="${CC:-gcc}"
 
-# Build wheel with explicit parallel compilation and NO isolation to respect env vars
-pip wheel . --no-deps --no-build-isolation --wheel-dir="$ARTIFACTS_DIR" -v
+# Build wheel - Using isolated build to avoid Debian setuptools install_layout bug
+# (--no-build-isolation triggers the Debian-patched install_lib check)
+pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" -v
 
 # Remove standard Pillow and install SIMD version
 pip uninstall -y Pillow pillow-simd 2>/dev/null || true

@@ -18,17 +18,36 @@ The scripts are designed to be:
 
 ---
 
-## 1. Host requirements
+## 1. Host Requirements
 
-Minimum assumptions:
+**Validated Baseline**:
 
-- Ubuntu 24.04 (or close) with a recent kernel.
-- ROCm **7.1.1** installed on the host under `/opt/rocm` (HIP, rocBLAS, MIOpen, RCCL).
-- Python 3.11 available on the host.
+| Component | Required Version |
+|-----------|-----------------|
+| **OS** | Ubuntu 24.04 LTS |
+| **Kernel** | 6.14.0-1016-oem (or later 6.14+ OEM) |
+| **ROCm** | 7.1.1 |
+| **Python** | 3.11 |
+| **GPU** | gfx1151 (Strix Halo / RDNA 3.5) |
+| **CPU** | znver5 (Zen 5) |
+
+Additional requirements:
 - Docker (optional) for vLLM container experiments.
 - Nix (optional) if you want the pinned dev shell.
 
-The scripts **do not** install ROCm themselves; they assume the ROCm stack is already present.
+The scripts **do not** install ROCm themselves; they assume the ROCm stack is already present under `/opt/rocm`.
+
+### ⚠️ Strix Halo / RDNA 3.5 Compatibility
+
+> **Important**: The gfx1151 APU identifies as Radeon 7900 XTX (gfx1100) at runtime for stability.
+
+This is the **"Masquerade Strategy"** required due to firmware conflicts in Kernel 6.14:
+
+- **Runtime**: `HSA_OVERRIDE_GFX_VERSION=11.0.0` (fakes gfx1100)
+- **Build**: Explicitly targets `gfx1151` with Wave32 patches
+- **Memory**: Zero-copy/unified memory via `GGML_CUDA_ENABLE_UNIFIED_MEMORY=1`
+
+The build scripts handle this automatically via `scripts/10_env_rocm_gfx1151.sh`.
 
 ---
 
@@ -93,15 +112,27 @@ From the repo root:
 
 ```bash
 # 0) Make sure scripts are executable
-chmod +x kickoff.sh scripts/*.sh
+chmod +x scripts/*.sh
 
 # 1) One-time system deps (build-essential, cmake, etc.)
 ./scripts/01_setup_system_dependencies.sh
 
 # 2) Python 3.11 virtualenv under ./.venv
 ./scripts/02_install_python_env.sh
+```
 
-# 3) Build PyTorch 2.9.1 (ROCm + CPU, gfx1151 only)
+### Recommended: Automated Build (handles masquerade automatically)
+
+```bash
+# The silent build runner handles all gfx1151 masquerade variables,
+# Wave32 patches, and dependency ordering automatically.
+./scripts/silent_build_runner.sh
+```
+
+### Manual Build (advanced users)
+
+```bash
+# 3) Build PyTorch 2.9.1 (ROCm + CPU, gfx1151 via masquerade)
 ./scripts/20_build_pytorch_rocm.sh
 
 # 4) Build vLLM (ROCm if ROCm 7.1.x + GPU is detected, else CPU-only)
@@ -111,14 +142,6 @@ chmod +x kickoff.sh scripts/*.sh
 ./scripts/40_build_llama_cpp_cpu.sh
 ./scripts/41_build_llama_cpp_rocm.sh
 ```
-
-Or use:
-
-```bash
-./kickoff.sh
-```
-
-to run the phases sequentially.
 
 ---
 

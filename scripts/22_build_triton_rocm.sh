@@ -76,8 +76,24 @@ export TRITON_PARALLEL_LINK_JOBS="${TRITON_PARALLEL_LINK_JOBS:-$MAX_JOBS}"
 export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
 export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
 
-# Install build dependencies
-pip install -q cmake ninja pybind11
+# Offline build configuration: Redirect cache and bypass downloads
+export TRITON_CACHE_DIR="$ROOT_DIR/.triton_cache"
+mkdir -p "$TRITON_CACHE_DIR"
+
+# Bypass third-party downloads by pointing to system/pre-installed locations
+# DISABLED: Let Triton download its own pybind11 and LLVM packages
+# Pybind11 is in the python site-packages (installed in Strike 1)
+# export PYBIND11_SYSPATH=$(python3.11 -c "import pybind11; print(pybind11.get_include())" 2>/dev/null || echo "")
+# LLVM is in ROCm path - but ROCm's LLVM LACKS MLIR!
+# DO NOT SET LLVM_SYSPATH - let Triton download its own LLVM with MLIR
+# export LLVM_SYSPATH="${ROCM_PATH}/llvm"
+# These are obsolete since ROCm LLVM has no MLIR:
+# export MLIR_DIR="${ROCM_PATH}/llvm/lib/cmake/mlir"
+# export CMAKE_PREFIX_PATH="${ROCM_PATH}/llvm:${CMAKE_PREFIX_PATH:-}"
+# JSON might be missing, but let's hope it's in the src or we can bypass it if not needed for the core
+
+# Install build dependencies (Skip in offline environment, pre-installed in Docker image)
+# pip install -q cmake ninja pybind11
 
 # Fix triton/profiler missing directory error (setup.py always expects it)
 mkdir -p python/triton/profiler
@@ -95,8 +111,8 @@ done
 cd python
 pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" --no-build-isolation
 
-# Install
-pip install --force-reinstall "$ARTIFACTS_DIR"/triton-*.whl
+# Install (--no-deps because dependencies are pre-installed in Docker base image)
+pip install --force-reinstall --no-deps "$ARTIFACTS_DIR"/triton-*.whl
 
 # Verify
 echo ""

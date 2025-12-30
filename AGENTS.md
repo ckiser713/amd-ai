@@ -49,7 +49,52 @@ Verification: Every script that uses PyTorch should include a sanity check:
 python -c "import torch; assert 'rocm' in torch.__version__.lower() or torch.version.hip, 'Optimized ROCm PyTorch NOT found!'"
 
 
-4. Hardware & Parallelism Constraints
+## 4. The Masquerade Protocol (MANDATORY for gfx1151)
+
+The AMD Strix Halo (gfx1151 / RDNA 3.5) operates under a **System-Wide Masquerade** due to firmware conflicts between Kernel 6.14+ and ROCm 7.1.1.
+
+### A. Core Principle
+> **Runtime identifies as gfx1100 (Radeon 7900 XTX); Build explicitly targets gfx1151.**
+
+This is **NOT OPTIONAL**. Removing the masquerade will cause "Node-1 Memory Access Fault" errors.
+
+### B. Environment Variables (NEVER REMOVE)
+These exports in `scripts/10_env_rocm_gfx1151.sh` are **IMMUTABLE**:
+
+```bash
+# Runtime Masquerade (CRITICAL - DO NOT REMOVE)
+export HSA_OVERRIDE_GFX_VERSION=11.0.0   # Fakes gfx1100 identity
+export ROCBLAS_STREAM_ORDER_ALLOC=1      # Memory corruption fix
+export HIP_FORCE_DEV_KERNARG=1           # Kernel launch latency fix
+
+# ML Framework Stabilizers
+export GGML_CUDA_ENABLE_UNIFIED_MEMORY=1 # Zero-copy for llama.cpp
+export VLLM_ENFORCE_EAGER=true           # Bypass CUDA graph capture
+export ROCSHMEM_DISABLE_MIXED_IPC=1      # IPC stabilizer
+
+# Build Target (explicit gfx1151)
+export PYTORCH_ROCM_ARCH=gfx1151
+export HCC_AMDGPU_TARGET=gfx1151
+```
+
+### C. Wave32 Mandate (C++/HIP Patching)
+RDNA 3.5 uses **Wave32** execution, not Wave64 like CDNA. When patching C++ or HIP code:
+
+1. **LDS Constants**: Halve any values derived from warpSize (64 → 32).
+2. **Compiler Flags**: Use `-DCK_TILE_WAVE_32=1` for xFormers/CK builds.
+3. **MFMA Instructions**: Guard `__builtin_amdgcn_mfma` calls behind `#if !defined(__gfx1151__)`.
+
+### D. Kernel 6.14+ Warning
+Ubuntu 24.04 with **Kernel 6.14.0-1016-oem** has known firmware incompatibilities:
+- "Node-1 Memory Access Fault" on bare gfx1151 execution
+- ROCm 7.1.1 IPC failures without `ROCSHMEM_DISABLE_MIXED_IPC`
+- Random GPU hangs without `HSA_OVERRIDE_GFX_VERSION`
+
+**Treatment**: The masquerade variables above are the ONLY supported fix. Do not attempt native gfx1151 execution until ROCm 7.2+.
+
+---
+
+## 5. Hardware & Parallelism Constraints
 
 Target CPU: znver5 (Zen 5). Use scripts/11_env_cpu_optimized.sh for CFLAGS.
 
@@ -57,7 +102,7 @@ Target GPU: gfx1151 (Strix Halo). Use scripts/10_env_rocm_gfx1151.sh.
 
 Parallelism: Always source scripts/parallel_env.sh and respect MAX_JOBS.
 
-5. Prohibited Actions & Anti-NVIDIA Policy
+6. Prohibited Actions & Anti-NVIDIA Policy
 
 Strict Anti-NVIDIA/CUDA: No NVIDIA/CUDA dependencies, drivers, or toolkit elements should ever be added to the prefetch or build scripts. If a third-party library attempts to force a CUDA dependency, the build must be halted.
 
@@ -67,7 +112,7 @@ No apt install of Python 3.12: This project is pinned to Python 3.11 for compati
 
 No Silencing Errors: All build scripts must use set -e.
 
-6. Escalation & Conflict Resolution
+7. Escalation & Conflict Resolution
 
 If a dependency conflict arises that cannot be solved by installing from the artifacts/ folder:
 
@@ -77,7 +122,7 @@ Notify the User: Halt execution and prompt the user to provide all relevant logs
 
 Check Compile List: If the path forward requires adding a library to the compile list, user confirmation is mandatory.
 
-7. Logging & History Protocol (MANDATORY)
+8. Logging & History Protocol (MANDATORY)
 
 To build a searchable history of fixes and prevent recurring headaches, all agents must adhere to the following logging standard:
 
@@ -117,7 +162,7 @@ Format Template:
 **End Time**: [YYYY-MM-DD HH:MM]
 
 
-8. Autonomous Build Agents (Silent Runner)
+9. Autonomous Build Agents (Silent Runner)
 
 We provide a silent runner script (scripts/silent_build_runner.sh) for looping through repairs while consuming minimal tokens.
 
@@ -129,7 +174,7 @@ Failure Protocol: On failure, it populates error.log with brief but detailed con
 
 Looping: Agents should fix issues based on error.log and re-execute the silent runner until "complete" is returned.
 
-9. Lock Protocol (MANDATORY)
+10. Lock Protocol (MANDATORY)
 
 The repository uses a "Lock & Track" system to prevent regressions on successful builds.
 
@@ -182,7 +227,7 @@ The file build_config/dependency_matrix.json tracks:
 4. Upstream/downstream dependencies.
 
 Agents should review this matrix before proposing changes that affect dependencies.
-10. Documentation Standards & Creation Protocol (STRICT)
+11. Documentation Standards & Creation Protocol (STRICT)
 
 To prevent repository clutter and fragmentation, strict rules apply to the creation and management of documentation files.
 

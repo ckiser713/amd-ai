@@ -63,3 +63,22 @@ echo "   ROCM_PATH: $ROCM_PATH"
 echo "   HIP_PATH: $HIP_PATH"
 echo "   GPU Target: $ROCM_GFX_ARCH"
 parallel_env_summary
+
+# =========================================================================
+# MASQUERADE STRATEGY: Single Source of Truth for gfx1151 (Strix Halo)
+# =========================================================================
+# Runtime sees gfx1100 for compatibility, but build explicitly targets gfx1151
+
+# Core Stabilizers (Kernel 6.14+ / ROCm 7.1.1)
+export HSA_OVERRIDE_GFX_VERSION=11.0.0   # Runtime fakes gfx1100 identity
+export ROCBLAS_STREAM_ORDER_ALLOC=1      # Memory corruption fix
+export HIP_FORCE_DEV_KERNARG=1           # Kernel launch latency fix
+
+# ML Framework Stabilizers
+export GGML_CUDA_ENABLE_UNIFIED_MEMORY=1 # Zero-copy hint for llama.cpp
+export VLLM_ENFORCE_EAGER=true           # Bypass CUDA graph capture issues
+export ROCSHMEM_DISABLE_MIXED_IPC=1      # IPC stabilizer for multi-GPU
+
+# Build Target (explicit gfx1151 for compiler)
+export PYTORCH_ROCM_ARCH="${PYTORCH_ROCM_ARCH:-gfx1151}"
+export HCC_AMDGPU_TARGET="${HCC_AMDGPU_TARGET:-gfx1151}"

@@ -34,6 +34,76 @@ Added defensive null checks before dereferencing `argv` and `envp`:
 
 ---
 
+## Technical Strategy: The Masquerade Refactor
+
+> **Context**: Ryzen AI Max+ 395 (gfx1151 / Strix Halo) on Ubuntu 24.04 / Kernel 6.14.0-1016-oem with ROCm 7.1.1.
+
+### The Problem
+
+Native gfx1151 operation on Kernel 6.14+ causes "**Node-1 Memory Access Fault**" errors due to firmware incompatibilities between the OEM kernel and ROCm 7.1.1 HSA runtime.
+
+### The Solution: System-Wide Masquerade
+
+The build system implements a three-layer strategy:
+
+| Layer | Strategy | Implementation |
+|-------|----------|----------------|
+| **Runtime** | Spoof gfx1100 identity | `HSA_OVERRIDE_GFX_VERSION=11.0.0` |
+| **Build** | Target gfx1151 explicitly | `PYTORCH_ROCM_ARCH=gfx1151` |
+| **Memory** | Force unified/zero-copy paths | `GGML_CUDA_ENABLE_UNIFIED_MEMORY=1` |
+
+### Key Environment Variables
+
+```bash
+# Runtime Masquerade (CRITICAL)
+export HSA_OVERRIDE_GFX_VERSION=11.0.0   # Fakes gfx1100 to bypass firmware bugs
+export ROCBLAS_STREAM_ORDER_ALLOC=1      # Prevents memory corruption
+export HIP_FORCE_DEV_KERNARG=1           # Kernel launch latency fix
+
+# ML Framework Stabilizers
+export GGML_CUDA_ENABLE_UNIFIED_MEMORY=1 # Zero-copy for llama.cpp
+export VLLM_ENFORCE_EAGER=true           # Bypasses CUDA graph capture issues
+export ROCSHMEM_DISABLE_MIXED_IPC=1      # IPC stabilizer
+
+# Build Target
+export PYTORCH_ROCM_ARCH=gfx1151
+export HCC_AMDGPU_TARGET=gfx1151
+```
+
+### Wave32 vs Wave64 Patching
+
+RDNA 3.5 (gfx1151) uses **Wave32** execution model, unlike CDNA GPUs which use Wave64. This requires:
+
+1. **LDS Constants**: Halve any values derived from `warpSize` (64 → 32)
+   - Example: `LDS_READ_FREQ = 64` → `LDS_READ_FREQ = 32` in ck_tile headers
+   
+2. **Compiler Flags**: Add `-DCK_TILE_WAVE_32=1` to CXXFLAGS for xFormers/CK builds
+
+3. **MFMA Guards**: RDNA doesn't support MFMA instructions. Guard with:
+   ```cpp
+   #if !defined(__gfx1151__) && !defined(__gfx1100__)
+   // MFMA code here
+   #endif
+   ```
+
+### Trade-offs
+
+| Aspect | Impact |
+|--------|--------|
+| **Stability** | ✅ Eliminates Node-1 Memory Access Faults |
+| **Compatibility** | ✅ Full ROCm 7.1.1 stack works |
+| **Performance** | ⚠️ Minor micro-optimization loss (~5% in microbenchmarks) |
+| **Debugging** | ⚠️ `rocminfo` shows gfx1100, not gfx1151 |
+
+### When to Remove Masquerade
+
+The masquerade should remain in place until:
+- ROCm 7.2+ with native gfx1151 firmware support
+- Kernel 6.15+ with fixed AMDGPU driver
+- AMD releases official Strix Halo compatibility patches
+
+---
+
 ## Directory Structure
 
 ```

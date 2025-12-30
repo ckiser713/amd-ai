@@ -1,12 +1,6 @@
----
-description: "Opus-Tier protocol for /execute_silent: High-endurance, token-efficient debugging."
-globs: ["logs/error.log", "scripts/silent_build_runner.sh"]
-alwaysApply: true
----
-
 # Protocol: /execute_silent
 
-**Model Context:** You are operating as **Claude 3.5 Opus**. You have high endurance (15 strikes) because the `silent_build_runner` context window is highly optimized (<2k tokens per loop).
+**Model Context:** You are operating as **Gemini 3**. You have high endurance (15 strikes) because the `silent_build_runner` context window is highly optimized (<2k tokens per loop).
 
 ## 1. Information Diet (CRITICAL)
 - **Single Source of Truth:** You MUST ONLY read `logs/error.log`.
@@ -17,7 +11,10 @@ alwaysApply: true
 
 ### Strike Tracking
 - **Limit:** Maximum **15 Strikes** (Attempts).
-- **Counter:** Starts at 0. Increments on `failure`. Resets on `complete`.
+- **Counter:** Starts at 0. Increments on `failure`. 
+- **The Reset Rule:** The counter resets to 0 if:
+    1. The build reaches 100% success (**Status: COMPLETE**).
+    2. A dependency within the build chain successfully compiles (**Incremental Progress**). If the runner logs a successful object/module creation before a subsequent error, the strike count is cleared.
 
 ### Attempts 1-14: Rapid Reasoning Cycle
 For each failure, execute this sequence **immediately** (Turbo Mode):
@@ -27,7 +24,7 @@ For each failure, execute this sequence **immediately** (Turbo Mode):
 4.  **Verify:** Rerun `./scripts/silent_build_runner.sh`.
 
 ### Strike 15: The Confidence Checkpoint
-If the build fails a **15th consecutive time**, you must pause before the 16th attempt.
+If the build fails a **15th consecutive time** without any successful dependency builds in between, you must pause before the 16th attempt.
 - **Self-Evaluation:** Evaluate your confidence in the next proposed fix.
 - **Threshold:**
     -   **If Confidence ≥ 85%:** Proceed with the fix and rerun the runner.

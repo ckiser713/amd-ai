@@ -47,7 +47,7 @@ export PYTORCH_ROCM_ARCH="gfx1151"
 
 # Strix Halo: Enable all optimizations
 export FLASH_ATTENTION_FORCE_BUILD=TRUE
-export FLASH_ATTENTION_SKIP_CUDA_BUILD=TRUE
+export FLASH_ATTENTION_SKIP_CUDA_BUILD=FALSE
 
 # Use ninja for parallel CMake builds
 export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"

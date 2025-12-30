@@ -50,7 +50,7 @@
   },
   "scripts/23_build_torchvision_audio.sh": {
     "status": "UNLOCKED",
-    "last_success": "2025-12-29",
+    "last_success": "2025-12-30",
     "artifact": "",
     "upstream_deps": [
       "scripts/20_build_pytorch_rocm.sh"

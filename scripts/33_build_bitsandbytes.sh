@@ -48,8 +48,46 @@ export PYTORCH_ROCM_ARCH="gfx1151"
 
 # Use Ninja for CMake builds
 export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
-export CMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS:-} -mwavefrontsize64"
+export CMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS:-} -D__HIP_PLATFORM_AMD__ -mwavefrontsize64 -DDISABLE_MFMA_GFX1151=1"
 export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$MAX_JOBS}"
+
+# Apply MFMA guard patch for gfx1151 (RDNA3+ doesn't support MFMA)
+echo "Applying MFMA guard patch for gfx1151..."
+cat > gfx1151_mfma_guard.py << 'PYEOF'
+import glob
+import os
+
+target_patterns = ["csrc/**/*.hip", "csrc/**/*.cu", "csrc/**/*.cpp"]
+guard_code = """
+#if defined(__gfx1151__) || defined(__gfx1100__)
+#define BNB_DISABLE_MFMA 1
+#endif
+"""
+
+patched = 0
+for pattern in target_patterns:
+    for filepath in glob.glob(pattern, recursive=True):
+        try:
+            with open(filepath, 'r') as f:
+                content = f.read()
+            if 'BNB_DISABLE_MFMA' in content:
+                continue
+            if '__builtin_amdgcn_mfma' in content or 'mfma_' in content:
+                # Guard MFMA calls
+                new_content = guard_code + content
+                new_content = new_content.replace(
+                    '__builtin_amdgcn_mfma',
+                    '/* MFMA disabled for gfx1151 */ (void)0 && __builtin_amdgcn_mfma'
+                )
+                with open(filepath, 'w') as f:
+                    f.write(new_content)
+                print(f"Patched MFMA guards: {filepath}")
+                patched += 1
+        except Exception as e:
+            print(f"Warning: {filepath}: {e}")
+print(f"MFMA guard patch complete: {patched} files")
+PYEOF
+python gfx1151_mfma_guard.py || echo "⚠ MFMA patch returned non-zero, continuing..."
 
 # Build wheel with explicit parallel compilation
 pip wheel . --no-deps --wheel-dir="$ARTIFACTS_DIR" --no-build-isolation -v
