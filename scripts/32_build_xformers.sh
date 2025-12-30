@@ -56,7 +56,7 @@ export CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
 # Explicitly pass parallel flags to ensure they propagate through pip subprocess
 # xformers uses setuptools which respects these environment variables
 export CFLAGS="${CFLAGS:-} -O3 -march=znver5 -mtune=znver5"
-export CXXFLAGS="${CXXFLAGS:-} -O3 -march=znver5 -mtune=znver5"
+export CXXFLAGS="${CXXFLAGS:-} -O3 -march=znver5 -mtune=znver5 -DCK_TILE_WAVE_32=1"
 export LDFLAGS="${LDFLAGS:-} -Wl,--as-needed"
 
 # Build wheel with explicit parallel compilation

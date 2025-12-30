@@ -119,6 +119,9 @@ fi
 source "$VENV_DIR/bin/activate"
 
 # Clean previous builds (aggressive clean to avoid CMake cache issues)
+# Ensure build dependencies (fixes ModuleNotFoundError: No module named 'setuptools.command.bdist_wheel')
+pip install --upgrade setuptools wheel
+
 rm -rf "$BUILD_DIR"
 rm -rf dist
 rm -rf build/aotriton  # Clean aotriton cache to prevent path mismatch errors

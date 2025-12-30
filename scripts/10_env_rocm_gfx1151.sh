@@ -24,6 +24,11 @@ export HIP_PATH="$ROCM_PATH"
 export HIP_ROOT_DIR="$ROCM_PATH"
 export HIP_DIR="$ROCM_PATH/lib/cmake/hip"
 export CMAKE_PREFIX_PATH="$ROCM_PATH${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
+
+# Strix Halo / Kernel 6.14+ Stabilizers
+export HSA_OVERRIDE_GFX_VERSION=11.0.0 # Fixes Node-1 Memory Access Fault
+export ROCBLAS_STREAM_ORDER_ALLOC=1    # Prevents OOM/Corruption
+
 if [[ -d "$ROCM_PATH/lib/cmake" ]]; then
     export CMAKE_PREFIX_PATH="$ROCM_PATH/lib/cmake:${CMAKE_PREFIX_PATH}"
 fi
